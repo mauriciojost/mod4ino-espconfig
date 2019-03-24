@@ -1,0 +1,13 @@
+/libs/
+/src/main4ino
+/src/log4ino
+/src/ArduinoJson
+/src/ArduinoJson.h
+/src/ArduinoJson.hpp
+/src/Base64.cpp
+/src/Base64.h
+/src/DateStrings.cpp
+/src/Time.cpp
+/src/Time.h
+/src/TimeLib.h
+/coverage.xml
