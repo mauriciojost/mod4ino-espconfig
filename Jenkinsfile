@@ -13,8 +13,14 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-	echo "My branch is: ${env.BRANCH_NAME}"
-	sh 'export GIT_COMMITTER_NAME=mjost && export GIT_COMMITTER_EMAIL=mauriciojost@gmail.com && set && ./pull_dependencies -p -l'
+        script {
+          sshagent(['bitbucket_key']) {
+            wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'xterm']) {
+              echo "My branch is: ${env.BRANCH_NAME}"
+              sh 'export GIT_COMMITTER_NAME=mjost && export GIT_COMMITTER_EMAIL=mauriciojost@gmail.com && set && ./pull_dependencies -p -l'
+            }
+          }
+        }
       }
     }
     stage('Test') {
