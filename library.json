@@ -1,0 +1,12 @@
+{
+  "name": "mod4ino",
+  "version": "0.0.1-SNAPSHOT",
+  "keywords": "module, device, bot, main4ino, arduino",
+  "description": "Module based on main4ino",
+  "repository": {
+    "type": "git",
+    "url": "git@bitbucket.org:mauriciojost/mod4ino.git"
+  },
+  "frameworks": "arduino",
+  "platforms": "atmelavr,espressif8266,linux_x86_64"
+}
