@@ -213,6 +213,10 @@ public:
     getMetadata()->changed();
   }
 
+  const char* getStatus() {
+    return status->getBuffer();
+  }
+
   bool oneRun() {
     return oRun;
   }
