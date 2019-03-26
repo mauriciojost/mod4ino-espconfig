@@ -39,11 +39,8 @@
 
 enum SettingsProps {
   SettingsDebugProp = 0,    // boolean, define if the device is in debug mode
-  SettingsStatusProp,       // string, defines the current general status of the device (vcc level, heap, etc)
   SettingsVersionProp,      // string, defines the current version
-  SettingsLcdLogsProp,      // boolean, define if the device display logs in LCD
   SettingsOneRunProp,       // boolean, define if the device is to be launched only once and then reseted (used in deep sleep mode)
-  SettingsFsLogsProp,       // boolean, define if logs are to be dumped in the file system (only in debug mode)
   SettingsPeriodMsProp,     // period in msec for the device to wait until update clock and make actors catch up with acting (if any)
   SettingsMiniPeriodMsProp, // period in msec for the device to got to sleep (and remain unresponsive from user) (only if no deep sleep)
   SettingsWifiSsidProp,     // wifi ssid
@@ -56,14 +53,11 @@ class Settings : public Actor {
 private:
   const char *name;
   bool devDebug;
-  bool lcdLogs;
   bool oRun;
-  bool fsLogs;
   int periodms;
   int miniperiodms;
   Buffer *ssid;
   Buffer *pass;
-  Buffer *status;
   Buffer *version;
   Metadata *md;
 
@@ -76,14 +70,11 @@ public:
     pass = new Buffer(CREDENTIAL_BUFFER_SIZE);
     pass->load(WIFI_PASSWORD_STEADY);
 
-    status = new Buffer(STATUS_BUFFER_SIZE);
 
     version = new Buffer(VERSION_BUFFER_SIZE);
 
     devDebug = true;
-    lcdLogs = false;
     oRun = false;
-    fsLogs = false;
     periodms = PERIOD_MSEC;
     miniperiodms = FRAG_TO_SLEEP_MS_MAX;
     md = new Metadata(n);
@@ -93,7 +84,13 @@ public:
     return name;
   }
 
-  void act() {}
+  void act() {
+  	static bool first = true;
+  	if (first) {
+  		first = false;
+      version->load(STRINGIFY(PROJ_VERSION));
+  	}
+  }
 
   const char *getPropName(int propIndex) {
     switch (propIndex) {
@@ -103,16 +100,10 @@ public:
         return SENSITIVE_PROP_PREFIX "wifipass";
       case (SettingsDebugProp):
         return DEBUG_PROP_PREFIX "debug";
-      case (SettingsStatusProp):
-        return STATUS_PROP_PREFIX "status";
       case (SettingsVersionProp):
         return DEBUG_PROP_PREFIX "version";
-      case (SettingsLcdLogsProp):
-        return DEBUG_PROP_PREFIX "lcdlogs";
       case (SettingsOneRunProp):
         return ADVANCED_PROP_PREFIX "onerun";
-      case (SettingsFsLogsProp):
-        return DEBUG_PROP_PREFIX "fslogs";
       case (SettingsPeriodMsProp):
         return DEBUG_PROP_PREFIX "periodms";
       case (SettingsMiniPeriodMsProp):
@@ -127,20 +118,11 @@ public:
       case (SettingsDebugProp):
         setPropBoolean(m, targetValue, actualValue, &devDebug);
         break;
-      case (SettingsStatusProp):
-        setPropValue(m, targetValue, actualValue, status);
-        break;
       case (SettingsVersionProp):
         setPropValue(m, targetValue, actualValue, version);
         break;
-      case (SettingsLcdLogsProp):
-        setPropBoolean(m, targetValue, actualValue, &lcdLogs);
-        break;
       case (SettingsOneRunProp):
         setPropBoolean(m, targetValue, actualValue, &oRun);
-        break;
-      case (SettingsFsLogsProp):
-        setPropBoolean(m, targetValue, actualValue, &fsLogs);
         break;
       case (SettingsPeriodMsProp):
         setPropInteger(m, targetValue, actualValue, &periodms);
@@ -174,15 +156,11 @@ public:
     return devDebug;
   }
 
-  bool getLcdLogs() {
-    return lcdLogs;
-  }
-
   void setDebug(bool b) {
     if (b != devDebug) {
+      devDebug = b;
       getMetadata()->changed();
     }
-    devDebug = b;
   }
 
   const char *getSsid() {
@@ -190,7 +168,10 @@ public:
   }
 
   void setSsid(const char *s) {
-    ssid->load(s);
+    if (!ssid->equals(s)) {
+      ssid->load(s);
+      getMetadata()->changed();
+    }
   }
 
   const char *getPass() {
@@ -198,7 +179,10 @@ public:
   }
 
   void setPass(const char *s) {
-    pass->load(s);
+    if (!pass->equals(s)) {
+      pass->load(s);
+      getMetadata()->changed();
+    }
   }
 
   void setVersion(const char *v) {
@@ -206,15 +190,6 @@ public:
       version->load(v);
       getMetadata()->changed();
     }
-  }
-
-  void setStatus(float vcc, int heap) {
-    status->fill("vcc:%0.2f,heap:%d", vcc, heap);
-    getMetadata()->changed();
-  }
-
-  const char* getStatus() {
-    return status->getBuffer();
   }
 
   bool oneRun() {
@@ -229,9 +204,6 @@ public:
     return miniperiodms;
   }
 
-  bool fsLogsEnabled() {
-    return fsLogs;
-  }
 };
 
 #endif // GLOBAL_INC
