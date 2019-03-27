@@ -64,7 +64,7 @@ int httpGet(const char *url, ParamStream *response, Table *headers) {
   if (sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/actors/%[a-z]/%[a-z]/last", str1, str2) == 2 && strcmp(str2, "reports") == 0) {
   	if (strcmp(str1, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded last '%s'", str1);
-      response->contentBuffer()->load("{\".status\":\"Restored\"}");
+      response->contentBuffer()->load("{\"+periodms\":\"10\"}");
   	} else {
       response->contentBuffer()->load(replyEmptyBody);
   	}
@@ -76,7 +76,7 @@ int httpGet(const char *url, ParamStream *response, Table *headers) {
              2 && strcmp(str2, "targets") == 0) {
   	if (strcmp(str1, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded target '%s'", str1);
-      response->contentBuffer()->load("{\".status\":\"Target\"}");
+      response->contentBuffer()->load("{\"+periodms\":\"20\"}");
   	} else {
       response->contentBuffer()->load(replyEmptyBody);
   	}
@@ -199,16 +199,16 @@ void test_basic_behaviour() {
            apiDevicePass);
 
   TEST_ASSERT_EQUAL(1, (int)m->getBot()->getClock()->currentTime()); // remote clock sync took place
-  TEST_ASSERT_EQUAL_STRING("Restored", m->getSettings()->getStatus()); // loaded previous value
+  TEST_ASSERT_EQUAL(10, m->getSettings()->periodMsec()); // loaded previous value
 
   log(CLASS_MAIN, Debug, "### module->loop()");
   m->getPropSync()->getTiming()->setFreq("~1s");
   m->loop();
-  TEST_ASSERT_EQUAL_STRING("Target", m->getSettings()->getStatus()); // loaded targets
+  TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec()); // loaded targets
 
   log(CLASS_MAIN, Debug, "### module->loop()");
   m->loop();
-  TEST_ASSERT_EQUAL_STRING("Target", m->getSettings()->getStatus()); // no change
+  TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec()); // no change
 
 }
 

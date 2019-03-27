@@ -105,9 +105,9 @@ public:
       case (SettingsOneRunProp):
         return ADVANCED_PROP_PREFIX "onerun";
       case (SettingsPeriodMsProp):
-        return DEBUG_PROP_PREFIX "periodms";
+        return ADVANCED_PROP_PREFIX "periodms";
       case (SettingsMiniPeriodMsProp):
-        return DEBUG_PROP_PREFIX "mperiodms";
+        return ADVANCED_PROP_PREFIX "mperiodms";
       default:
         return "";
     }
