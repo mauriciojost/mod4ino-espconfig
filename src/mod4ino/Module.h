@@ -409,7 +409,7 @@ public:
   }
 
   void infoCmd() {
-  	info();
+    info();
   }
 
   void getProps(const char *actorN) {
