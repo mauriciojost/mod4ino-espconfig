@@ -44,6 +44,8 @@
   "\n  (all messages are shown as info log level)"                                                                                         \
   "\n"
 
+enum CmdExecStatus { NotFound = 0, InvalidArgs, Executed, ExecutedInterrupt, CmdFailed };
+
 /**
  * This class represents the integration of all components (LCD, buttons, buzzer, etc).
  */
@@ -62,7 +64,7 @@ private:
   bool (*sleepInterruptable)(time_t cycleBegin, time_t periodSec);
   void (*configureModeArchitecture)();
   void (*runModeArchitecture)();
-  bool (*commandArchitecture)(const char *cmd);
+  CmdExecStatus (*commandArchitecture)(const char *cmd);
   bool (*fileRead)(const char *fname, Buffer *content);
   bool (*fileWrite)(const char *fname, const char *content);
   void (*info)();
@@ -159,7 +161,7 @@ public:
              bool (*sleepInterruptableFunc)(time_t cycleBegin, time_t periodSec),
              void (*configureModeArchitectureFunc)(),
              void (*runModeArchitectureFunc)(),
-             bool (*commandArchitectureFunc)(const char *cmd),
+             CmdExecStatus (*commandArchitectureFunc)(const char *cmd),
              void (*infoFunc)(),
              void (*updateFunc)(const char* descriptor),
              void (*testFunc)(),
@@ -208,15 +210,14 @@ public:
   /**
    * Handle a user command.
    * If no command maches, commandArchitecture will be used as fallback.
-   * Returns true if the command requires the current wait batch to be interrupted (normally true with change of bot mode)
    */
-  bool command(const char *cmd) {
+  CmdExecStatus command(const char *cmd) {
 
     Buffer b(cmd);
     log(CLASS_MODULE, Info, "\n> %s\n", b.getBuffer());
 
     if (b.getLength() == 0) {
-      return false;
+      return NotFound;
     }
 
     char *c = strtok(b.getUnsafeBuffer(), " ");
@@ -227,111 +228,110 @@ public:
       const char *v = strtok(NULL, " ");
       if (actor == NULL || prop == NULL || v == NULL) {
         logRaw(CLASS_MODULE, Warn, "Arguments needed:\n  set <actor> <prop> <value>");
-        return false;
+        return InvalidArgs;
       }
       log(CLASS_MODULE, Info, "-> Set %s.%s = %s", actor, prop, v);
       Buffer value(64, v);
       bot->setProp(actor, prop, &value);
-      return false;
+      return Executed;
     } else if (strcmp("get", c) == 0) {
       log(CLASS_MODULE, Info, "-> Get");
       const char *actor = strtok(NULL, " ");
       getProps(actor);
-      return false;
+      return Executed;
     } else if (strcmp("int", c) == 0) {
       log(CLASS_MODULE, Info, "Interrupt");
-      return true;
+      return ExecutedInterrupt;
     } else if (strcmp("run", c) == 0) {
       log(CLASS_MODULE, Info, "-> Run mode");
       runCmd();
-      return true;
+      return ExecutedInterrupt;
     } else if (strcmp("conf", c) == 0) {
       log(CLASS_MODULE, Info, "-> Configure mode");
       confCmd();
-      return true;
+      return ExecutedInterrupt;
     } else if (strcmp("info", c) == 0) {
       infoCmd();
-      return false;
+      return Executed;
     } else if (strcmp("test", c) == 0) {
       test();
-      return false;
+      return Executed;
     } else if (strcmp("update", c) == 0) {
       const char *descriptor = strtok(NULL, " ");
       if (descriptor == NULL) {
         logRaw(CLASS_MODULE, Warn, "Arguments needed:\n  update <descriptor>");
-        return false;
+        return InvalidArgs;
       }
       update(descriptor);
-      return false;
+      return Executed;
     } else if (strcmp("clear", c) == 0) {
       clearDevice();
-      return false;
+      return Executed;
     } else if (strcmp("logl", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
         char ll = getLogLevel();
         log(CLASS_MODULE, Info, "Log level: %d", ll);
-        return false;
+        return InvalidArgs;
       }
       int ll = atoi(c);
       setLogLevel(ll);
       log(CLASS_MODULE, Info, "Log level: %d", ll);
-      return false;
+      return Executed;
     } else if (strcmp("wifissid", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
         logRaw(CLASS_MODULE, Warn, "Argument needed:\n  wifissid <ssid>");
-        return false;
+        return InvalidArgs;
       }
       settings->setSsid(c);
       log(CLASS_MODULE, Info, "Wifi ssid: %s", settings->getSsid());
-      return false;
+      return Executed;
     } else if (strcmp("wifipass", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
         logRaw(CLASS_MODULE, Warn, "Argument needed:\n  wifipass <pass>");
-        return false;
+        return InvalidArgs;
       }
       settings->setPass(c);
       log(CLASS_MODULE, Info, "Wifi pass: %s", settings->getPass());
-      return false;
+      return Executed;
     } else if (strcmp("wifi", c) == 0) {
       initWifi();
-      return false;
+      return Executed;
     } else if (strcmp("actall", c) == 0) {
       actall();
-      return false;
+      return Executed;
     } else if (strcmp("touchall", c) == 0) {
       touchall();
-      return false;
+      return Executed;
     } else if (strcmp("actone", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
         logRaw(CLASS_MODULE, Warn, "Argument needed:\n  actone <actorname>");
-        return false;
+        return InvalidArgs;
       }
       actone(c);
-      return false;
+      return Executed;
     } else if (strcmp("store", c) == 0) {
       propSync->fsStoreActorsProps(); // store credentials
       log(CLASS_MODULE, Info, "Properties stored locally");
-      return false;
+      return Executed;
     } else if (strcmp("save", c) == 0) {
       const char *fname = strtok(NULL, " ");
       const char *content = strtok(NULL, "?????");
       bool suc = fileWrite(fname, content);
       log(CLASS_MODULE, Info, "File '%s' saved: %d", fname, (int)suc);
-      return false;
+      return Executed;
     } else if (strcmp("load", c) == 0) {
       propSync->fsLoadActorsProps(); // load mainly credentials already set
       log(CLASS_MODULE, Info, "Properties loaded from local copy");
-      return false;
+      return Executed;
     } else if (strcmp("help", c) == 0 || strcmp("?", c) == 0) {
       logRaw(CLASS_MODULE, Warn, HELP_COMMAND_CLI);
       commandArchitecture(c);
-      return false;
+      return Executed;
     } else {
-      log(CLASS_MODULE, Info, "Not found in Module: '%s'", c);
       return commandArchitecture(c);
     }
   }

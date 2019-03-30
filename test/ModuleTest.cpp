@@ -162,9 +162,9 @@ void runModeArchitecture() {
   log(CLASS_MAIN, Debug, "runModeArchitecture()");
 }
 
-bool commandArchitecture(const char *command) {
+CmdExecStatus commandArchitecture(const char *command) {
   log(CLASS_MAIN, Debug, "commandArchitecture('%s')", command);
-  return false;
+  return NotFound;
 }
 
 void configureModeArchitecture() {
