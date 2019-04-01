@@ -45,6 +45,7 @@
   "\n"
 
 enum CmdExecStatus { NotFound = 0, InvalidArgs, Executed, ExecutedInterrupt, CmdFailed };
+#define CMD_EXEC_STATUS(s) (s == NotFound? "not found": (s == InvalidArgs? "invalid args": (s == Executed? "executed": (s == ExecutedInterrupt? "executed int": (CmdFailed)))))
 
 /**
  * This class represents the integration of all components (LCD, buttons, buzzer, etc).
