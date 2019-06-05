@@ -10,6 +10,9 @@
 
 #define CLASS_MAIN "ModuleTest"
 
+#define REQ_POST 1
+#define REQ_GET 2
+
 const char *replyEmptyBody = "{}";
 
 bool wifiConnected;
@@ -18,6 +21,7 @@ int pullCount;
 void setUp(void) {
   wifiConnected = true;
   pullCount = 1;
+  setLogLevel(Debug);
 }
 
 void tearDown() {}
@@ -57,41 +61,111 @@ bool initWifi(const char *ssid, const char *pass, bool skipIfConnected, int retr
   return wifiConnected;
 }
 
-int httpGet(const char *url, ParamStream *response, Table *headers) {
+int httpRequest(int req, const char *url, const char *body, ParamStream *response, Table *headers) {
+	/*
+
+  if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets?status=C&ids=true", url) == 0) {
+    response->contentBuffer()->load("{\"ids\": [1]}");
+    return HTTP_OK;
+
+  } else if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/actors/settings/last", url) == 0) {
+    response->contentBuffer()->load("{\"config1\":\"0\",\"config2\":\"0\"}");
+    return HTTP_OK;
+  } else if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/actors/clock/last", url) == 0) {
+    response->contentBuffer()->load("{}");
+    return HTTP_OK;
+
+  // PULL BY ACTOR
+  } else if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets/1/actors/clock", url) == 0) {
+    response->contentBuffer()->load("{}");
+    return HTTP_OK;
+  } else if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets/1/actors/settings", url) == 0) {
+    response->contentBuffer()->load("{\"config1\":\"1\",\"config2\":\"77\"}");
+    return HTTP_OK;
+
+  } else if (req == REQ_POST && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/", url) == 0 && strcmp(body, "{}") == 0) {
+    response->contentBuffer()->load("{\"id\":2}");
+    return HTTP_CREATED;
+
+  } else if (req == REQ_POST) {
+    return HTTP_CREATED;
+
+  } else if (req == REQ_POST && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/2?status=C", url) == 0) {
+    return HTTP_OK;
+
+  } else if (req == REQ_POST && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets/1?status=X", url) == 0) {
+    return HTTP_OK;
+
+    */
   char str1[128];
   char str2[128];
+  long l1;
 
-  if (sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/actors/%[a-z]/%[a-z]/last", str1, str2) == 2 && strcmp(str2, "reports") == 0) {
-  	if (strcmp(str1, "settings") == 0) {
+  // RESTORE BY ACTOR
+  if (req == REQ_GET && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/actors/%[a-z]/last", str1, str2) == 2 && strcmp(str1, "reports") == 0) {
+  	if (strcmp(str2, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded last '%s'", str1);
       response->contentBuffer()->load("{\"+periodms\":\"10\"}");
   	} else {
       response->contentBuffer()->load(replyEmptyBody);
   	}
     return HTTP_OK;
-  } else if (strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets/count?status=C", url) == 0) {
-    response->contentBuffer()->fill("{\"count\":%d}", pullCount);
+
+  // RETRIEVE TARGETS NOT CONSUMED (I.E. CLOSED STATUS)
+  } else if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets?status=C&ids=true", url) == 0) {
+    response->contentBuffer()->load("{\"ids\": [1]}");
     return HTTP_OK;
-  } else if (sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/actors/%[a-z]/%[a-z]/summary?consume=true&status=C", str1, str2) ==
-             2 && strcmp(str2, "targets") == 0) {
-  	if (strcmp(str1, "settings") == 0) {
-      log(CLASS_MAIN, Info, "Settings loaded target '%s'", str1);
+
+  // PULL BY ACTOR
+  } else if (req == REQ_GET && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) ==
+             3 && strcmp(str1, "targets") == 0) {
+  	if (strcmp(str2, "settings") == 0) {
+      log(CLASS_MAIN, Info, "Settings loaded target '%s' from %ld", str1, l1);
       response->contentBuffer()->load("{\"+periodms\":\"20\"}");
   	} else {
+      log(CLASS_MAIN, Info, "Settings loaded generic");
       response->contentBuffer()->load(replyEmptyBody);
   	}
     return HTTP_OK;
-  } else if (sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/time?timezone=%s", str1) == 1) {
+
+  // PUSH BY ACTOR (REPORTS)
+  } else if (req == REQ_POST && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) == 3) {
+    return HTTP_CREATED;
+
+  // MARK REPORT AS CLOSED
+  // MARK TARGET AS CONSUMED
+  } else if (req == REQ_POST && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld?status=", str1, &l1) == 2) {
+    return HTTP_OK;
+
+  // PRE-PUSH BY ACTOR (REPORTS)
+  } else if (req == REQ_POST && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/", str1) == 1) {
+  	if (strcmp(str1, "reports") == 0) {
+      response->contentBuffer()->load("{\"id\": 1}");
+      return HTTP_CREATED;
+  	} else {
+      return HTTP_OK;
+  	}
+
+  // RETRIEVE TIME
+  } else if (req == REQ_GET && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/time?timezone=%s", str1) == 1) {
     response->contentBuffer()->load("{\"formatted\":\"1970-01-01T00:00:01\"}");
     return HTTP_OK;
+
+  // UNKNOWN
   } else {
     log(CLASS_MAIN, Debug, "Unknown url '%s'", url);
-    return HTTP_BAD_REQUEST;
+    TEST_FAIL();
+    return 0;
   }
+
+}
+
+int httpGet(const char *url, ParamStream *response, Table *headers) {
+  return httpRequest(REQ_GET, url, NULL, response, headers);
 }
 
 int httpPost(const char *url, const char *body, ParamStream *response, Table *headers) {
-  return HTTP_CREATED;
+  return httpRequest(REQ_POST, url, body, response, headers);
 }
 
 void clearDevice() {
@@ -199,14 +273,10 @@ void test_basic_behaviour() {
            apiDevicePass);
 
   TEST_ASSERT_EQUAL(1, (int)m->getBot()->getClock()->currentTime()); // remote clock sync took place
-  TEST_ASSERT_EQUAL(10, m->getSettings()->periodMsec()); // loaded previous value
+  TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec()); // loaded target value
 
   log(CLASS_MAIN, Debug, "### module->loop()");
   m->getPropSync()->getTiming()->setFreq("~1s");
-  m->loop();
-  TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec()); // loaded targets
-
-  log(CLASS_MAIN, Debug, "### module->loop()");
   m->loop();
   TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec()); // no change
 
