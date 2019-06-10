@@ -9,6 +9,8 @@
 
 export BUMP=${1:-PATCH} # can be MAJOR, MINOR or PATCH
 
+set -e
+
 CURR_BRANCH=`git rev-parse --abbrev-ref HEAD`
 if [ "$CURR_BRANCH" != "master" ]
 then
@@ -20,7 +22,6 @@ function inc() {
   local i=$1
   echo `echo $i + 1 | bc`
 }
-
 
 echo "### Parsing current version ..."
 export VERSION=`cat library.json |  jq  .version | sed 's/"//g'`
