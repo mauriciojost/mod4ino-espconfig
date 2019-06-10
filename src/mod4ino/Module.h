@@ -97,7 +97,7 @@ private:
     getPropSync()->fsLoadActorsProps();
 
     log(CLASS_MODULE, Info, "# Syncing actors with main4ino server...");
-    bool serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS); // sync properties from the server
+    bool serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, getSettings()->oneRun()); // sync properties from the server
 
     if (!serSyncd)
       return false; // fail fast
@@ -438,11 +438,6 @@ public:
     time_t cycleBegin = now();
     runModeArchitecture();
     cycleBot(false, false, true);
-    if (getSettings()->oneRun()) {
-      // before finishing store in the server the last status of all actors
-      log(CLASS_MODULE, Info, "Syncing actors with server (run)...");
-      getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS); // sync properties from the server (with new props and new clock blocked timing)
-    }
     sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
   }
 
