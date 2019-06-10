@@ -37,6 +37,7 @@
   "\n  actone ...      : make actor <x> act"                                                                                               \
   "\n  wifissid ...    : set wifi ssid"                                                                                                    \
   "\n  wifipass ...    : set wifi pass"                                                                                                    \
+  "\n  cat ...         : show content of a file (only if in insecure mode)"                                                              \
   "\n  load            : load properties in persistent fs (mainly for credentials)"                                                        \
   "\n  store           : save properties in persistent fs (mainly for credentials)"                                                        \
   "\n  save ...        : save a file <f> with content <y> in persistent fs (mainly for tuning) "                                           \
@@ -228,7 +229,7 @@ public:
       const char *prop = strtok(NULL, " ");
       const char *v = strtok(NULL, " ");
       if (actor == NULL || prop == NULL || v == NULL) {
-        logRaw(CLASS_MODULE, Warn, "Arguments needed:\n  set <actor> <prop> <value>");
+        logRawUser("Arguments needed:\n  set <actor> <prop> <value>");
         return InvalidArgs;
       }
       log(CLASS_MODULE, Info, "-> Set %s.%s = %s", actor, prop, v);
@@ -260,7 +261,7 @@ public:
     } else if (strcmp("update", c) == 0) {
       const char *descriptor = strtok(NULL, " ");
       if (descriptor == NULL) {
-        logRaw(CLASS_MODULE, Warn, "Arguments needed:\n  update <descriptor>");
+        logRawUser("Arguments needed:\n  update <descriptor>");
         return InvalidArgs;
       }
       update(descriptor);
@@ -282,7 +283,7 @@ public:
     } else if (strcmp("wifissid", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
-        logRaw(CLASS_MODULE, Warn, "Argument needed:\n  wifissid <ssid>");
+        logRawUser("Argument needed:\n  wifissid <ssid>");
         return InvalidArgs;
       }
       settings->setSsid(c);
@@ -291,7 +292,7 @@ public:
     } else if (strcmp("wifipass", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
-        logRaw(CLASS_MODULE, Warn, "Argument needed:\n  wifipass <pass>");
+        logRawUser("Argument needed:\n  wifipass <pass>");
         return InvalidArgs;
       }
       settings->setPass(c);
@@ -309,7 +310,7 @@ public:
     } else if (strcmp("actone", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
-        logRaw(CLASS_MODULE, Warn, "Argument needed:\n  actone <actorname>");
+        logRawUser("Argument needed:\n  actone <actorname>");
         return InvalidArgs;
       }
       actone(c);
@@ -324,12 +325,22 @@ public:
       bool suc = fileWrite(fname, content);
       log(CLASS_MODULE, Info, "File '%s' saved: %d", fname, (int)suc);
       return Executed;
+#ifdef INSECURE
+    } else if (strcmp("cat", c) == 0) { // could be potentially used to display credentials
+      const char *f = strtok(NULL, " ");
+      Buffer buf(128);
+      fileRead(f, &buf);
+      logUser("### File: %s", f);
+      logRawUser(buf.getBuffer());
+      logUser("###");
+      return Executed;
+#endif // INSECURE
     } else if (strcmp("load", c) == 0) {
       propSync->fsLoadActorsProps(); // load mainly credentials already set
       log(CLASS_MODULE, Info, "Properties loaded from local copy");
       return Executed;
     } else if (strcmp("help", c) == 0 || strcmp("?", c) == 0) {
-      logRaw(CLASS_MODULE, Warn, HELP_COMMAND_CLI);
+      logRawUser(HELP_COMMAND_CLI);
       commandArchitecture(c);
       return Executed;
     } else {
