@@ -21,11 +21,10 @@
 #define HELP_COMMAND_CLI                                                                                                                   \
   "\n  MODULE HELP"                                                                                                                        \
   "\n  int             : interrupt current ongoing action"                                                                                 \
-  "\n  run             : go to run mode"                                                                                                   \
-  "\n  conf            : go to conf mode"                                                                                                  \
+  "\n  mode [run,conf] : get or set the mode"                                                                                              \
   "\n  info            : show info about the device"                                                                                       \
   "\n  test            : test the architecture/hardware"                                                                                   \
-  "\n  update ...      : update the firmware with the given descriptor"                                                                                              \
+  "\n  update ...      : update the firmware with the given descriptor"                                                                    \
   "\n  wifi            : init steady wifi"                                                                                                 \
   "\n  get             : display actors properties"                                                                                        \
   "\n  get ...         : display actor <actor> properties"                                                                                 \
@@ -37,7 +36,7 @@
   "\n  actone ...      : make actor <x> act"                                                                                               \
   "\n  wifissid ...    : set wifi ssid"                                                                                                    \
   "\n  wifipass ...    : set wifi pass"                                                                                                    \
-  "\n  cat ...         : show content of a file (only if in insecure mode)"                                                              \
+  "\n  cat ...         : show content of a file (only if in insecure mode)"                                                                \
   "\n  load            : load properties in persistent fs (mainly for credentials)"                                                        \
   "\n  store           : save properties in persistent fs (mainly for credentials)"                                                        \
   "\n  save ...        : save a file <f> with content <y> in persistent fs (mainly for tuning) "                                           \
@@ -46,7 +45,7 @@
   "\n"
 
 enum CmdExecStatus { NotFound = 0, InvalidArgs, Executed, ExecutedInterrupt, CmdFailed };
-#define CMD_EXEC_STATUS(s) (s == NotFound? "Not found": (s == InvalidArgs? "Invalid args": (s == Executed? "Executed": (s == ExecutedInterrupt? "Executed w/int": ("Cmd failed")))))
+#define CMD_EXEC_STATUS(s) (s == NotFound? "Not found": (s == InvalidArgs? "Invalid args": (s == Executed? "Executed": (s == ExecutedInterrupt? "Executed w/int": (s == CmdFailed? "Failed": "Unknown")))))
 
 /**
  * This class represents the integration of all components (LCD, buttons, buzzer, etc).
@@ -244,14 +243,22 @@ public:
     } else if (strcmp("int", c) == 0) {
       log(CLASS_MODULE, Info, "Interrupt");
       return ExecutedInterrupt;
-    } else if (strcmp("run", c) == 0) {
-      log(CLASS_MODULE, Info, "-> Run mode");
-      runCmd();
-      return ExecutedInterrupt;
-    } else if (strcmp("conf", c) == 0) {
-      log(CLASS_MODULE, Info, "-> Configure mode");
-      confCmd();
-      return ExecutedInterrupt;
+    } else if (strcmp("mode", c) == 0) {
+      const char *m = strtok(NULL, " ");
+       if (m == NULL) {
+        logUser("Mode: %s", getBot()->getModeName());
+        return Executed;
+      } else if (strcmp("run", m) == 0) {
+        log(CLASS_MODULE, Info, "-> Run mode");
+        runCmd();
+        return ExecutedInterrupt;
+      } else if (strcmp("conf", m) == 0) {
+        log(CLASS_MODULE, Info, "-> Configure mode");
+        confCmd();
+        return ExecutedInterrupt;
+      } else {
+        return InvalidArgs;
+      }
     } else if (strcmp("info", c) == 0) {
       infoCmd();
       return Executed;
@@ -341,8 +348,7 @@ public:
       return Executed;
     } else if (strcmp("help", c) == 0 || strcmp("?", c) == 0) {
       logRawUser(HELP_COMMAND_CLI);
-      commandArchitecture(c);
-      return Executed;
+      return commandArchitecture("?");
     } else {
       return commandArchitecture(c);
     }
