@@ -89,12 +89,12 @@ private:
    */
   bool sync() {
 
+    log(CLASS_MODULE, Info, "# Loading general properties/creds stored in FS...");
+    getPropSync()->fsLoadActorsProps();
+
     log(CLASS_MODULE, Info, "# Loading main4ino properties/creds stored in FS...");
     getPropSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
     getClockSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
-
-    log(CLASS_MODULE, Info, "# Loading other properties/creds stored in FS...");
-    getPropSync()->fsLoadActorsProps();
 
     log(CLASS_MODULE, Info, "# Syncing actors with main4ino server...");
     bool serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, getSettings()->oneRun()); // sync properties from the server
