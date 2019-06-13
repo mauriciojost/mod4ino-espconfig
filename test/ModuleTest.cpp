@@ -62,41 +62,6 @@ bool initWifi(const char *ssid, const char *pass, bool skipIfConnected, int retr
 }
 
 int httpRequest(int req, const char *url, const char *body, ParamStream *response, Table *headers) {
-	/*
-
-  if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets?status=C&ids=true", url) == 0) {
-    response->contentBuffer()->load("{\"ids\": [1]}");
-    return HTTP_OK;
-
-  } else if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/actors/settings/last", url) == 0) {
-    response->contentBuffer()->load("{\"config1\":\"0\",\"config2\":\"0\"}");
-    return HTTP_OK;
-  } else if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/actors/clock/last", url) == 0) {
-    response->contentBuffer()->load("{}");
-    return HTTP_OK;
-
-  // PULL BY ACTOR
-  } else if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets/1/actors/clock", url) == 0) {
-    response->contentBuffer()->load("{}");
-    return HTTP_OK;
-  } else if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets/1/actors/settings", url) == 0) {
-    response->contentBuffer()->load("{\"config1\":\"1\",\"config2\":\"77\"}");
-    return HTTP_OK;
-
-  } else if (req == REQ_POST && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/", url) == 0 && strcmp(body, "{}") == 0) {
-    response->contentBuffer()->load("{\"id\":2}");
-    return HTTP_CREATED;
-
-  } else if (req == REQ_POST) {
-    return HTTP_CREATED;
-
-  } else if (req == REQ_POST && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/2?status=C", url) == 0) {
-    return HTTP_OK;
-
-  } else if (req == REQ_POST && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets/1?status=X", url) == 0) {
-    return HTTP_OK;
-
-    */
   char str1[128];
   char str2[128];
   long l1;
