@@ -89,7 +89,7 @@ private:
    * 5. Return success if properties and clock sync went well
    *
    */
-  bool startupProperties() {
+public: bool startupProperties() {
 
     log(CLASS_MODULE, Info, "# Loading general properties/creds stored in FS...");
     getPropSync()->fsLoadActorsProps();
@@ -119,8 +119,25 @@ private:
     return clockSyncd;
   }
 
-public:
-  Module() {
+/**
+ * Core of mod4ino
+ *
+ * Module that provides:
+ * - time keeping and sync services (via Clock and ClockSync classes from main4ino)
+ * - property synchronization services (via PropSync class from main4ino)
+ *
+ * Use as follows:
+ *
+ *   Module* module = new Module();
+ *   module->getActors()->add(n, (Actor *)actor1, ...);
+ *   module->setup(...);
+ *   module->startupProperties(...);
+ *   while (true) {
+ *     module->loop();
+ *   }
+ *
+ */
+public: Module() {
     actors = new Array<Actor *>;
 
     settings = new Settings("settings");
@@ -154,7 +171,7 @@ public:
     apiDevicePass = NULL;
   }
 
-  void setup(BotMode (*setupArchitecture)(),
+  public: void setup(BotMode (*setupArchitecture)(),
              bool (*initWifiFunc)(),
              int (*httpPostFunc)(const char *url, const char *body, ParamStream *response, Table *headers),
              int (*httpGetFunc)(const char *url, ParamStream *response, Table *headers),
@@ -170,7 +187,8 @@ public:
              void (*updateFunc)(const char* descriptor),
              void (*testFunc)(),
              const char *(*apiDeviceLoginFunc)(),
-             const char *(*apiDevicePassFunc)()) {
+             const char *(*apiDevicePassFunc)()
+						 ) {
 
     // Unstable situation from now until the end of the function
     //
@@ -203,19 +221,13 @@ public:
 
     getBot()->setMode(mode);
 
-    if (mode == RunMode) {
-      bool syncSucc = startupProperties();
-      if (!syncSucc) {
-        abortFunc("Could not startup properties");
-      }
-    }
   }
 
   /**
    * Handle a user command.
    * If no command maches, commandArchitecture will be used as fallback.
    */
-  CmdExecStatus command(const char *cmd) {
+  public: CmdExecStatus command(const char *cmd) {
 
     Buffer b(cmd);
     log(CLASS_MODULE, Info, "\n> %s\n", b.getBuffer());
@@ -357,7 +369,7 @@ public:
     }
   }
 
-  void cycleBot(bool mode, bool set, bool cycle) {
+  public: void cycleBot(bool mode, bool set, bool cycle) {
     TimingInterrupt interruptType = TimingInterruptNone;
     if (cycle) {
       interruptType = TimingInterruptCycle;
@@ -368,27 +380,27 @@ public:
 
   // All getters should be removed, and initialization of these instances below should
   // be done in Module itself. This should help decrease the size of
-  SerBot *getBot() {
+  public: SerBot *getBot() {
     return bot;
   }
 
 
-  ClockSync *getClockSync() {
+  public: ClockSync *getClockSync() {
     return clockSync;
   }
 
-  PropSync *getPropSync() {
+  public: PropSync *getPropSync() {
     return propSync;
   }
 
-  Settings *getSettings() {
+  public: Settings *getSettings() {
     return settings;
   }
 
   /**
    * Make all actors act
    */
-  void actall() {
+  public: void actall() {
     for (int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
       log(CLASS_MODULE, Info, "One off: %s", a->getName());
@@ -399,7 +411,7 @@ public:
   /**
    * Touch all actors (to force them to be syncrhonized)
    */
-  void touchall() {
+  public: void touchall() {
     for (int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
       Metadata *m = a->getMetadata();
@@ -411,7 +423,7 @@ public:
   /**
    * Make a given by-name-actor act
    */
-  void actone(const char *actorName) {
+  public: void actone(const char *actorName) {
     for (int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
       if (strcmp(a->getName(), actorName) == 0) {
@@ -421,19 +433,19 @@ public:
     }
   }
 
-  void runCmd() {
+  public: void runCmd() {
     bot->setMode(RunMode);
   }
 
-  void confCmd() {
+  public: void confCmd() {
     bot->setMode(ConfigureMode);
   }
 
-  void infoCmd() {
+  public: void infoCmd() {
     info();
   }
 
-  void getProps(const char *actorN) {
+  public: void getProps(const char *actorN) {
     Buffer contentAuxBuffer(256);
     Array<Actor *> *actors = bot->getActors();
     for (int i = 0; i < actors->size(); i++) {
@@ -448,24 +460,24 @@ public:
     }
   }
 
-  void configureMode() {
+  public: void configureMode() {
     time_t cycleBegin = now();
     configureModeArchitecture();
     sleepInterruptable(cycleBegin, PERIOD_CONFIGURE_MSEC / 1000);
   }
 
-  void runMode() {
+  public: void runMode() {
     time_t cycleBegin = now();
     runModeArchitecture();
     cycleBot(false, false, true);
     sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
   }
 
-  Array<Actor *> *getActors() {
+  public: Array<Actor *> *getActors() {
     return actors;
   }
 
-  void loop() {
+  public: void loop() {
     switch (getBot()->getMode()) {
       case (RunMode):
         log(CLASS_MODULE, Info, "\n\nBEGIN LOOP (ver: %s)", STRINGIFY(PROJ_VERSION));

@@ -236,6 +236,7 @@ void test_basic_behaviour() {
            testArchitecture,
            apiDeviceLogin,
            apiDevicePass);
+  m->startupProperties();
 
   TEST_ASSERT_EQUAL(1, (int)m->getBot()->getClock()->currentTime()); // remote clock sync took place
   TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec()); // loaded target value
