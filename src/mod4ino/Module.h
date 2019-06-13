@@ -77,27 +77,30 @@ private:
   int (*httpGet)(const char *url, ParamStream *response, Table *headers);
 
   /**
-   * Synchronize with the server.
+   * Start up all module's properties
    *
+   * Retrieve credentials and other properties from FS and server and report actual ones.
+   *
+   * 1. Load properties from the file system (general properties/credentials not related to the framework).
    * 0. Load properties from the file system (credentials related to the framework).
-   * 1. Load properties from the file system (other properties/credentials not related to the framework).
    * 2. Pull/push properties from/to the server
    * 3. Set time of actors with last known time
    * 4. Find out real current time
    * 5. Return success if properties and clock sync went well
    *
    */
-  bool sync() {
+  bool startupProperties() {
 
     log(CLASS_MODULE, Info, "# Loading general properties/creds stored in FS...");
     getPropSync()->fsLoadActorsProps();
 
     log(CLASS_MODULE, Info, "# Loading main4ino properties/creds stored in FS...");
-    getPropSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
+    getPropSync()->setLoginPass(apiDeviceLogin(), apiDevicePass()); // may override credentials loaded in steps above
     getClockSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
 
     log(CLASS_MODULE, Info, "# Syncing actors with main4ino server...");
-    bool serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, getSettings()->oneRun()); // sync properties from the server
+    bool forcePush = getSettings()->oneRun(); // if onerun configured, better push systematically a report
+    bool serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, forcePush); // sync properties from the server
 
     if (!serSyncd)
       return false; // fail fast
@@ -201,9 +204,9 @@ public:
     getBot()->setMode(mode);
 
     if (mode == RunMode) {
-      bool syncSucc = sync();
+      bool syncSucc = startupProperties();
       if (!syncSucc) {
-        abortFunc("Could not sync");
+        abortFunc("Could not startup properties");
       }
     }
   }
