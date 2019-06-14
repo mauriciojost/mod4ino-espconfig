@@ -113,7 +113,8 @@ public: bool startupProperties() {
 
     log(CLASS_MODULE, Info, "# Syncing clock...");
     // sync real date / time on clock, block if a single run is requested
-    bool clockSyncd = getClockSync()->syncClock(getSettings()->oneRun(), DEFAULT_CLOCK_SYNC_ATTEMPTS);
+    bool freezeTime = getSettings()->oneRun();
+    bool clockSyncd = getClockSync()->syncClock(freezeTime, DEFAULT_CLOCK_SYNC_ATTEMPTS);
     log(CLASS_MODULE, Info, "# Current time: %s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
 
     return clockSyncd;
