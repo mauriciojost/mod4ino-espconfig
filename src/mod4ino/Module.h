@@ -476,8 +476,8 @@ public: Module() {
       // this includes the timing of the clock, that has progressed
     	// and will allow the next run to start from where we left off
       log(CLASS_MODULE, Info, "Syncing actors with server (run)...");
-      // sync properties from the server (with new props and new clock blocked timing)
-      getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, true);
+      // push properties to the server (with new props and new clock blocked timing)
+      getPropSync()->pushActors(DEFAULT_PROP_SYNC_ATTEMPTS, true);
     }
     sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
   }
