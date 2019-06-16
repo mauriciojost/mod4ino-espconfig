@@ -99,8 +99,13 @@ public: bool startupProperties() {
     getClockSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
 
     log(CLASS_MODULE, Info, "# Syncing actors with main4ino server...");
-    bool forcePush = getSettings()->oneRun(); // if onerun configured, better push systematically a report
-    bool serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, forcePush); // sync properties from the server
+    bool serSyncd = false;
+    if (getSettings()->oneRun()) {
+      serSyncd = getPropSync()->pullActors(DEFAULT_PROP_SYNC_ATTEMPTS); // push is postponed
+    } else {
+      bool forcePush = getSettings()->oneRun(); // if onerun configured, better push systematically a report
+      serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, forcePush); // sync properties from the server
+    }
 
     if (!serSyncd)
       return false; // fail fast
