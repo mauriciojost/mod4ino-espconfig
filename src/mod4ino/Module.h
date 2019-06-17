@@ -74,6 +74,9 @@ private:
   // Sleep function (must be interruptable, return true if interrupted).
   bool (*sleepInterruptable)(time_t cycleBegin, time_t periodSec);
 
+  // Deep sleep function not interruptable (after sleep it resets)
+  void (*deepSleepNotInterruptable)(time_t cycleBegin, time_t periodSec);
+
   // Run one cycle for the architecture (configure mode).
   void (*configureModeArchitecture)();
 
@@ -199,6 +202,7 @@ public:
     httpGet = NULL;
     httpPost = NULL;
     sleepInterruptable = NULL;
+    deepSleepNotInterruptable = NULL;
     configureModeArchitecture = NULL;
     runModeArchitecture = NULL;
     commandArchitecture = NULL;
@@ -222,6 +226,7 @@ public:
              bool (*fileWriteFunc)(const char *fname, const char *content),
              void (*abortFunc)(const char *msg),
              bool (*sleepInterruptableFunc)(time_t cycleBegin, time_t periodSec),
+             void (*deepSleepNotInterruptableFunc)(time_t cycleBegin, time_t periodSec),
              void (*configureModeArchitectureFunc)(),
              void (*runModeArchitectureFunc)(),
              CmdExecStatus (*commandArchitectureFunc)(const char *cmd),
@@ -243,6 +248,7 @@ public:
     initWifi = initWifiFunc;
     clearDevice = clearDeviceFunc;
     sleepInterruptable = sleepInterruptableFunc;
+    deepSleepNotInterruptable = deepSleepNotInterruptableFunc;
     configureModeArchitecture = configureModeArchitectureFunc;
     runModeArchitecture = runModeArchitectureFunc;
     commandArchitecture = commandArchitectureFunc;
@@ -533,8 +539,10 @@ public:
       log(CLASS_MODULE, Info, "Pushing actors to server (onerun)...");
       // push properties to the server (with new props and new clock blocked timing)
       getPropSync()->pushActors(DEFAULT_PROP_SYNC_ATTEMPTS, true);
+      deepSleepNotInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
+    } else {
+      sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     }
-    sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
   }
 
 public:

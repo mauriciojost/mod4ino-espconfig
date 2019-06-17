@@ -197,6 +197,10 @@ bool sleepInterruptable(time_t cycleBegin, time_t periodSecs) {
   return false;
 }
 
+void sleepNotInterruptable(time_t cycleBegin, time_t periodSecs) {
+  log(CLASS_MAIN, Info, "sleepNotInterruptable(%ds)...", (int)periodSecs);
+}
+
 BotMode setupArchitecture() {
   log(CLASS_MAIN, Debug, "setupArchitecture()");
   setExternalMillis(millis);
@@ -234,6 +238,7 @@ void test_basic_behaviour() {
            writeFile,
            abort,
            sleepInterruptable,
+           sleepNotInterruptable,
            configureModeArchitecture,
            runModeArchitecture,
            commandArchitecture,
