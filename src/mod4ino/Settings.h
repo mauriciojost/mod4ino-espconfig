@@ -40,7 +40,6 @@
 enum SettingsProps {
   SettingsDebugProp = 0,    // boolean, define if the device is in debug mode
   SettingsVersionProp,      // string, defines the current version
-  SettingsOneRunProp,       // boolean, define if the device is to be launched only once and then reseted (used in deep sleep mode)
   SettingsPeriodMsProp,     // period in msec for the device to wait until update clock and make actors catch up with acting (if any)
   SettingsMiniPeriodMsProp, // period in msec for the device to got to sleep (and remain unresponsive from user) (only if no deep sleep)
   SettingsWifiSsidProp,     // wifi ssid
@@ -53,7 +52,6 @@ class Settings : public Actor {
 private:
   const char *name;
   bool devDebug;
-  bool oRun;
   int periodms;
   int miniperiodms;
   Buffer *ssid;
@@ -70,11 +68,9 @@ public:
     pass = new Buffer(CREDENTIAL_BUFFER_SIZE);
     pass->load(WIFI_PASSWORD_STEADY);
 
-
     version = new Buffer(VERSION_BUFFER_SIZE);
 
     devDebug = true;
-    oRun = false;
     periodms = PERIOD_MSEC;
     miniperiodms = FRAG_TO_SLEEP_MS_MAX;
     md = new Metadata(n);
@@ -85,11 +81,11 @@ public:
   }
 
   void act() {
-  	static bool first = true;
-  	if (first) {
-  		first = false;
+    static bool first = true;
+    if (first) {
+      first = false;
       version->load(STRINGIFY(PROJ_VERSION));
-  	}
+    }
   }
 
   const char *getPropName(int propIndex) {
@@ -102,8 +98,6 @@ public:
         return DEBUG_PROP_PREFIX "debug";
       case (SettingsVersionProp):
         return DEBUG_PROP_PREFIX "version";
-      case (SettingsOneRunProp):
-        return ADVANCED_PROP_PREFIX "onerun";
       case (SettingsPeriodMsProp):
         return ADVANCED_PROP_PREFIX "periodms";
       case (SettingsMiniPeriodMsProp):
@@ -120,9 +114,6 @@ public:
         break;
       case (SettingsVersionProp):
         setPropValue(m, targetValue, actualValue, version);
-        break;
-      case (SettingsOneRunProp):
-        setPropBoolean(m, targetValue, actualValue, &oRun);
         break;
       case (SettingsPeriodMsProp):
         setPropInteger(m, targetValue, actualValue, &periodms);
@@ -186,14 +177,10 @@ public:
   }
 
   void setVersion(const char *v) {
-    if (!version->equals(v)){
+    if (!version->equals(v)) {
       version->load(v);
       getMetadata()->changed();
     }
-  }
-
-  bool oneRun() {
-    return oRun;
   }
 
   int periodMsec() {
@@ -203,7 +190,6 @@ public:
   int miniPeriodMsec() {
     return miniperiodms;
   }
-
 };
 
 #endif // GLOBAL_INC

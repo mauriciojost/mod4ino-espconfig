@@ -45,7 +45,12 @@
   "\n"
 
 enum CmdExecStatus { NotFound = 0, InvalidArgs, Executed, ExecutedInterrupt, CmdFailed };
-#define CMD_EXEC_STATUS(s) (s == NotFound? "Not found": (s == InvalidArgs? "Invalid args": (s == Executed? "Executed": (s == ExecutedInterrupt? "Executed w/int": (s == CmdFailed? "Failed": "Unknown")))))
+#define CMD_EXEC_STATUS(s)                                                                                                                 \
+  (s == NotFound                                                                                                                           \
+       ? "Not found"                                                                                                                       \
+       : (s == InvalidArgs                                                                                                                 \
+              ? "Invalid args"                                                                                                             \
+              : (s == Executed ? "Executed" : (s == ExecutedInterrupt ? "Executed w/int" : (s == CmdFailed ? "Failed" : "Unknown")))))
 
 /**
  * This class represents the integration of all components (LCD, buttons, buzzer, etc).
@@ -76,6 +81,9 @@ private:
   int (*httpPost)(const char *url, const char *body, ParamStream *response, Table *headers);
   int (*httpGet)(const char *url, ParamStream *response, Table *headers);
 
+  // Defines if this module is aimed at a single execution (some devices need this, as deep sleep modes equal full restarts).
+  bool (*oneRunMode)();
+
   /**
    * Start up all module's properties
    *
@@ -89,7 +97,8 @@ private:
    * 5. Return success if properties and clock sync went well
    *
    */
-public: bool startupProperties() {
+public:
+  bool startupProperties() {
 
     log(CLASS_MODULE, Info, "# Loading general properties/creds stored in FS...");
     getPropSync()->fsLoadActorsProps();
@@ -99,12 +108,12 @@ public: bool startupProperties() {
     getClockSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
 
     log(CLASS_MODULE, Info, "# Syncing actors with main4ino server...");
+    bool oneRun = oneRunMode();
     bool serSyncd = false;
-    if (getSettings()->oneRun()) {
-      serSyncd = getPropSync()->pullActors(DEFAULT_PROP_SYNC_ATTEMPTS); // push is postponed
+    if (oneRun) {
+      serSyncd = getPropSync()->pullActors(DEFAULT_PROP_SYNC_ATTEMPTS); // only pull, push is postponed
     } else {
-      bool forcePush = getSettings()->oneRun(); // if onerun configured, better push systematically a report
-      serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, forcePush); // sync properties from the server
+      serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, false); // sync properties from the server
     }
 
     if (!serSyncd)
@@ -118,32 +127,33 @@ public: bool startupProperties() {
 
     log(CLASS_MODULE, Info, "# Syncing clock...");
     // sync real date / time on clock, block if a single run is requested
-    bool freezeTime = getSettings()->oneRun();
+    bool freezeTime = oneRun;
     bool clockSyncd = getClockSync()->syncClock(freezeTime, DEFAULT_CLOCK_SYNC_ATTEMPTS);
     log(CLASS_MODULE, Info, "# Current time: %s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
 
     return clockSyncd;
   }
 
-/**
- * Core of mod4ino
- *
- * Module that provides:
- * - time keeping and sync services (via Clock and ClockSync classes from main4ino)
- * - property synchronization services (via PropSync class from main4ino)
- *
- * Use as follows:
- *
- *   Module* module = new Module();
- *   module->getActors()->add(n, (Actor *)actor1, ...);
- *   module->setup(...);
- *   module->startupProperties(...);
- *   while (true) {
- *     module->loop();
- *   }
- *
- */
-public: Module() {
+  /**
+   * Core of mod4ino
+   *
+   * Module that provides:
+   * - time keeping and sync services (via Clock and ClockSync classes from main4ino)
+   * - property synchronization services (via PropSync class from main4ino)
+   *
+   * Use as follows:
+   *
+   *   Module* module = new Module();
+   *   module->getActors()->add(n, (Actor *)actor1, ...);
+   *   module->setup(...);
+   *   module->startupProperties(...);
+   *   while (true) {
+   *     module->loop();
+   *   }
+   *
+   */
+public:
+  Module() {
     actors = new Array<Actor *>;
 
     settings = new Settings("settings");
@@ -151,12 +161,7 @@ public: Module() {
     clockSync = new ClockSync("clocksync");
     clock = new Clock("clock");
 
-    actors->add(4,
-      (Actor *)settings,
-      (Actor *)propSync,
-      (Actor *)clockSync,
-      (Actor *)clock
-		);
+    actors->add(4, (Actor *)settings, (Actor *)propSync, (Actor *)clockSync, (Actor *)clock);
 
     bot = new SerBot(clock, actors);
 
@@ -175,9 +180,11 @@ public: Module() {
     update = NULL;
     apiDeviceLogin = NULL;
     apiDevicePass = NULL;
+    oneRunMode = NULL;
   }
 
-  public: void setup(BotMode (*setupArchitecture)(),
+public:
+  void setup(BotMode (*setupArchitecture)(),
              bool (*initWifiFunc)(),
              int (*httpPostFunc)(const char *url, const char *body, ParamStream *response, Table *headers),
              int (*httpGetFunc)(const char *url, ParamStream *response, Table *headers),
@@ -190,19 +197,19 @@ public: Module() {
              void (*runModeArchitectureFunc)(),
              CmdExecStatus (*commandArchitectureFunc)(const char *cmd),
              void (*infoFunc)(),
-             void (*updateFunc)(const char* descriptor),
+             void (*updateFunc)(const char *descriptor),
              void (*testFunc)(),
              const char *(*apiDeviceLoginFunc)(),
-             const char *(*apiDevicePassFunc)()
-						 ) {
+             const char *(*apiDevicePassFunc)(),
+             bool (*oneRunModeFunc)()) {
 
     // Unstable situation from now until the end of the function
     //
     // Actors are being initialized. When they act, they use callback functions that
     // may trigger low level calls (like IO, LCD, etc) which are not set up yet.
-    // As a good practice, actors should do no low level calls unless they are asked to act.
+    // As a good practice, actors should NOT do any low level calls until they are executed the method act().
     // Setup of low level calls happens in setupArchitecture().
-    // After that actors will be eventually asked for acting.
+    // After that, actors will be eventually asked for acting.
 
     initWifi = initWifiFunc;
     clearDevice = clearDeviceFunc;
@@ -219,6 +226,7 @@ public: Module() {
     apiDevicePass = apiDevicePassFunc;
     httpGet = httpGetFunc;
     httpPost = httpPostFunc;
+    oneRunMode = oneRunModeFunc;
 
     propSync->setup(bot, initWifi, httpGet, httpPost, fileRead, fileWrite);
     clockSync->setup(bot->getClock(), initWifi, httpGet);
@@ -226,14 +234,14 @@ public: Module() {
     BotMode mode = setupArchitecture(); // module objects initialized, architecture can be initialized now
 
     getBot()->setMode(mode);
-
   }
 
   /**
    * Handle a user command.
    * If no command maches, commandArchitecture will be used as fallback.
    */
-  public: CmdExecStatus command(const char *cmd) {
+public:
+  CmdExecStatus command(const char *cmd) {
 
     Buffer b(cmd);
     log(CLASS_MODULE, Info, "\n> %s\n", b.getBuffer());
@@ -266,7 +274,7 @@ public: Module() {
       return ExecutedInterrupt;
     } else if (strcmp("mode", c) == 0) {
       const char *m = strtok(NULL, " ");
-       if (m == NULL) {
+      if (m == NULL) {
         logUser("Mode: %s", getBot()->getModeName());
         return Executed;
       } else if (strcmp("run", m) == 0) {
@@ -375,7 +383,8 @@ public: Module() {
     }
   }
 
-  public: void cycleBot(bool mode, bool set, bool cycle) {
+public:
+  void cycleBot(bool mode, bool set, bool cycle) {
     TimingInterrupt interruptType = TimingInterruptNone;
     if (cycle) {
       interruptType = TimingInterruptCycle;
@@ -386,27 +395,31 @@ public: Module() {
 
   // All getters should be removed, and initialization of these instances below should
   // be done in Module itself. This should help decrease the size of
-  public: SerBot *getBot() {
+public:
+  SerBot *getBot() {
     return bot;
   }
 
-
-  public: ClockSync *getClockSync() {
+public:
+  ClockSync *getClockSync() {
     return clockSync;
   }
 
-  public: PropSync *getPropSync() {
+public:
+  PropSync *getPropSync() {
     return propSync;
   }
 
-  public: Settings *getSettings() {
+public:
+  Settings *getSettings() {
     return settings;
   }
 
   /**
    * Make all actors act
    */
-  public: void actall() {
+public:
+  void actall() {
     for (int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
       log(CLASS_MODULE, Info, "One off: %s", a->getName());
@@ -417,7 +430,8 @@ public: Module() {
   /**
    * Touch all actors (to force them to be syncrhonized)
    */
-  public: void touchall() {
+public:
+  void touchall() {
     for (int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
       Metadata *m = a->getMetadata();
@@ -429,7 +443,8 @@ public: Module() {
   /**
    * Make a given by-name-actor act
    */
-  public: void actone(const char *actorName) {
+public:
+  void actone(const char *actorName) {
     for (int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
       if (strcmp(a->getName(), actorName) == 0) {
@@ -439,19 +454,23 @@ public: Module() {
     }
   }
 
-  public: void runCmd() {
+public:
+  void runCmd() {
     bot->setMode(RunMode);
   }
 
-  public: void confCmd() {
+public:
+  void confCmd() {
     bot->setMode(ConfigureMode);
   }
 
-  public: void infoCmd() {
+public:
+  void infoCmd() {
     info();
   }
 
-  public: void getProps(const char *actorN) {
+public:
+  void getProps(const char *actorN) {
     Buffer contentAuxBuffer(256);
     Array<Actor *> *actors = bot->getActors();
     for (int i = 0; i < actors->size(); i++) {
@@ -466,32 +485,36 @@ public: Module() {
     }
   }
 
-  public: void configureMode() {
+public:
+  void configureMode() {
     time_t cycleBegin = now();
     configureModeArchitecture();
     sleepInterruptable(cycleBegin, PERIOD_CONFIGURE_MSEC / 1000);
   }
 
-  public: void runMode() {
+public:
+  void runMode() {
     time_t cycleBegin = now();
     runModeArchitecture();
     cycleBot(false, false, true);
-    if (getSettings()->oneRun()) {
+    if (oneRunMode()) {
       // before finishing store in the server the last status of all actors
       // this includes the timing of the clock, that has progressed
-    	// and will allow the next run to start from where we left off
-      log(CLASS_MODULE, Info, "Syncing actors with server (run)...");
+      // and will allow the next run to start from where we left off
+      log(CLASS_MODULE, Info, "Pushing actors to server (onerun)...");
       // push properties to the server (with new props and new clock blocked timing)
       getPropSync()->pushActors(DEFAULT_PROP_SYNC_ATTEMPTS, true);
     }
     sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
   }
 
-  public: Array<Actor *> *getActors() {
+public:
+  Array<Actor *> *getActors() {
     return actors;
   }
 
-  public: void loop() {
+public:
+  void loop() {
     switch (getBot()->getMode()) {
       case (RunMode):
         log(CLASS_MODULE, Info, "\n\nBEGIN LOOP (ver: %s)", STRINGIFY(PROJ_VERSION));

@@ -52,6 +52,10 @@ const char *apiDevicePass() {
   return "password";
 }
 
+bool oneRunModeOff() {
+  return false;
+}
+
 void logLine(const char *str) {
   log(CLASS_MAIN, Debug, "logLine('%s')", str);
 }
@@ -67,62 +71,64 @@ int httpRequest(int req, const char *url, const char *body, ParamStream *respons
   long l1;
 
   // RESTORE BY ACTOR
-  if (req == REQ_GET && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/actors/%[a-z]/last", str1, str2) == 2 && strcmp(str1, "reports") == 0) {
-  	if (strcmp(str2, "settings") == 0) {
+  if (req == REQ_GET && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/actors/%[a-z]/last", str1, str2) == 2 &&
+      strcmp(str1, "reports") == 0) {
+    if (strcmp(str2, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded last '%s'", str1);
       response->contentBuffer()->load("{\"+periodms\":\"10\"}");
-  	} else {
+    } else {
       response->contentBuffer()->load(replyEmptyBody);
-  	}
+    }
     return HTTP_OK;
 
-  // RETRIEVE TARGETS NOT CONSUMED (I.E. CLOSED STATUS)
+    // RETRIEVE TARGETS NOT CONSUMED (I.E. CLOSED STATUS)
   } else if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets?status=C&ids=true", url) == 0) {
     response->contentBuffer()->load("{\"ids\": [1]}");
     return HTTP_OK;
 
-  // PULL BY ACTOR
-  } else if (req == REQ_GET && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) ==
-             3 && strcmp(str1, "targets") == 0) {
-  	if (strcmp(str2, "settings") == 0) {
+    // PULL BY ACTOR
+  } else if (req == REQ_GET &&
+             sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) == 3 &&
+             strcmp(str1, "targets") == 0) {
+    if (strcmp(str2, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded target '%s' from %ld", str1, l1);
       response->contentBuffer()->load("{\"+periodms\":\"20\"}");
-  	} else {
+    } else {
       log(CLASS_MAIN, Info, "Settings loaded generic");
       response->contentBuffer()->load(replyEmptyBody);
-  	}
+    }
     return HTTP_OK;
 
-  // PUSH BY ACTOR (REPORTS)
-  } else if (req == REQ_POST && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) == 3) {
+    // PUSH BY ACTOR (REPORTS)
+  } else if (req == REQ_POST &&
+             sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) == 3) {
     return HTTP_CREATED;
 
-  // MARK REPORT AS CLOSED
-  // MARK TARGET AS CONSUMED
+    // MARK REPORT AS CLOSED
+    // MARK TARGET AS CONSUMED
   } else if (req == REQ_POST && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld?status=", str1, &l1) == 2) {
     return HTTP_OK;
 
-  // PRE-PUSH BY ACTOR (REPORTS)
+    // PRE-PUSH BY ACTOR (REPORTS)
   } else if (req == REQ_POST && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/", str1) == 1) {
-  	if (strcmp(str1, "reports") == 0) {
+    if (strcmp(str1, "reports") == 0) {
       response->contentBuffer()->load("{\"id\": 1}");
       return HTTP_CREATED;
-  	} else {
+    } else {
       return HTTP_OK;
-  	}
+    }
 
-  // RETRIEVE TIME
+    // RETRIEVE TIME
   } else if (req == REQ_GET && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/time?timezone=%s", str1) == 1) {
     response->contentBuffer()->load("{\"formatted\":\"1970-01-01T00:00:01\"}");
     return HTTP_OK;
 
-  // UNKNOWN
+    // UNKNOWN
   } else {
     log(CLASS_MAIN, Debug, "Unknown url '%s'", url);
     TEST_FAIL();
     return 0;
   }
-
 }
 
 int httpGet(const char *url, ParamStream *response, Table *headers) {
@@ -182,7 +188,7 @@ void testArchitecture() {
   log(CLASS_MAIN, Debug, "testArchitecture()");
 }
 
-void updateFirmware(const char* d) {
+void updateFirmware(const char *d) {
   log(CLASS_MAIN, Debug, "updateFirmware(%s)", d);
 }
 
@@ -235,17 +241,17 @@ void test_basic_behaviour() {
            updateFirmware,
            testArchitecture,
            apiDeviceLogin,
-           apiDevicePass);
+           apiDevicePass,
+           oneRunModeOff);
   m->startupProperties();
 
   TEST_ASSERT_EQUAL(1, (int)m->getBot()->getClock()->currentTime()); // remote clock sync took place
-  TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec()); // loaded target value
+  TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec());             // loaded target value
 
   log(CLASS_MAIN, Debug, "### module->loop()");
   m->getPropSync()->getTiming()->setFreq("~1s");
   m->loop();
   TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec()); // no change
-
 }
 
 int main() {
