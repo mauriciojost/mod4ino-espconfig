@@ -65,20 +65,49 @@ private:
   Settings *settings;
   SerBot *bot;
 
+  // Initialization of wifi.
   bool (*initWifi)();
+
+  // Clear device function (remove filesystem, stacktraces, logs, etc...).
   void (*clearDevice)();
+
+  // Sleep function (must be interruptable, return true if interrupted).
   bool (*sleepInterruptable)(time_t cycleBegin, time_t periodSec);
+
+  // Run one cycle for the architecture (configure mode).
   void (*configureModeArchitecture)();
+
+  // Run one cycle for the architecture (run mode).
   void (*runModeArchitecture)();
+
+  // Function that executes a command from the underlying architecture point of view.
   CmdExecStatus (*commandArchitecture)(const char *cmd);
+
+  // File read function.
   bool (*fileRead)(const char *fname, Buffer *content);
+
+  // File write function.
   bool (*fileWrite)(const char *fname, const char *content);
+
+  // Information display function (version, general status, battery, etc.).
   void (*info)();
+
+  // HW test.
   void (*test)();
-  void (*update)(const char* descriptor);
+
+  // Firmware update.
+  void (*update)(const char *descriptor);
+
+  // Retrieve the login for the main4ino API.
   const char *(*apiDeviceLogin)();
+
+  // Retrieve the password for the main4ino API.
   const char *(*apiDevicePass)();
+
+  // Regular HTTP POST.
   int (*httpPost)(const char *url, const char *body, ParamStream *response, Table *headers);
+
+  // Regular HTTP GET.
   int (*httpGet)(const char *url, ParamStream *response, Table *headers);
 
   // Defines if this module is aimed at a single execution (some devices need this, as deep sleep modes equal full restarts).
