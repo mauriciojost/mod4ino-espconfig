@@ -26,6 +26,7 @@
   "\n  test            : test the architecture/hardware"                                                                                   \
   "\n  update ...      : update the firmware with the given descriptor"                                                                    \
   "\n  wifi            : init steady wifi"                                                                                                 \
+  "\n  wifistop        : stop steady wifi"                                                                                                 \
   "\n  get             : display actors properties"                                                                                        \
   "\n  get ...         : display actor <actor> properties"                                                                                 \
   "\n  set ...         : set an actor property (example: 'set body msg0 HELLO')"                                                           \
@@ -75,6 +76,9 @@ private:
 
   // Initialization of wifi.
   bool (*initWifi)();
+
+  // Stop wifi.
+  void (*stopWifi)();
 
   // Clear device function (remove filesystem, stacktraces, logs, etc...).
   void (*clearDevice)();
@@ -158,6 +162,7 @@ public:
     bot = new SerBot(clock, actors);
 
     initWifi = NULL;
+    stopWifi = NULL;
     clearDevice = NULL;
     httpGet = NULL;
     httpPost = NULL;
@@ -184,6 +189,7 @@ public:
    */
   void setup(BotMode (*setupArchitecture)(),
              bool (*initWifiFunc)(),
+             void (*stopWifiFunc)(),
              int (*httpPostFunc)(const char *url, const char *body, ParamStream *response, Table *headers),
              int (*httpGetFunc)(const char *url, ParamStream *response, Table *headers),
              void (*clearDeviceFunc)(),
@@ -210,6 +216,7 @@ public:
     // After that, actors will be eventually asked for acting.
 
     initWifi = initWifiFunc;
+    stopWifi = stopWifiFunc;
     clearDevice = clearDeviceFunc;
     sleepInterruptable = sleepInterruptableFunc;
     deepSleepNotInterruptable = deepSleepNotInterruptableFunc;
@@ -268,6 +275,7 @@ public:
     }
 
     if (getPropSync()->isFailure(serSyncd)) {
+    	stopWifi();
       return ModuleStartupPropertiesCodePropertiesSyncFailure;
     }
 
@@ -284,9 +292,11 @@ public:
     log(CLASS_MODULE, Info, "# Current time: %s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
 
     if (!clockSyncd) {
+    	stopWifi();
       return ModuleStartupPropertiesCodeClockSyncFailure;
     }
 
+    stopWifi();
     return ModuleStartupPropertiesCodeSuccess;
   }
 
@@ -391,6 +401,9 @@ public:
       return Executed;
     } else if (strcmp("wifi", c) == 0) {
       initWifi();
+      return Executed;
+    } else if (strcmp("wifistop", c) == 0) {
+      stopWifi();
       return Executed;
     } else if (strcmp("actall", c) == 0) {
       actall();
@@ -564,9 +577,11 @@ public:
       log(CLASS_MODULE, Info, "Pushing actors to server (onerun)...");
       // push properties to the server (with new props and new clock blocked timing)
       getPropSync()->pushActors(DEFAULT_PROP_SYNC_ATTEMPTS, true);
+    	stopWifi();
       deepSleepNotInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     } else {
       sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
+    	stopWifi();
     }
   }
 

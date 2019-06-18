@@ -44,6 +44,9 @@ bool initWifiSimple() {
   return wifiConnected;
 }
 
+void stopWifi() { }
+
+
 const char *apiDeviceLogin() {
   return "testdevice";
 }
@@ -227,6 +230,7 @@ void test_basic_behaviour() {
   log(CLASS_MAIN, Debug, "### module->setup(...)");
   m->setup(setupArchitecture,
            initWifiSimple,
+           stopWifi,
            httpPost,
            httpGet,
            clearDevice,
@@ -243,8 +247,9 @@ void test_basic_behaviour() {
            apiDeviceLogin,
            apiDevicePass,
            oneRunModeOff);
-  m->startupProperties();
+  ModuleStartupPropertiesCode s = m->startupProperties();
 
+  TEST_ASSERT_EQUAL(ModuleStartupPropertiesCodeSuccess, s);          // success
   TEST_ASSERT_EQUAL(1, (int)m->getBot()->getClock()->currentTime()); // remote clock sync took place
   TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec());             // loaded target value
 
