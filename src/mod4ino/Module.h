@@ -52,6 +52,14 @@ enum CmdExecStatus { NotFound = 0, InvalidArgs, Executed, ExecutedInterrupt, Cmd
               ? "Invalid args"                                                                                                             \
               : (s == Executed ? "Executed" : (s == ExecutedInterrupt ? "Executed w/int" : (s == CmdFailed ? "Failed" : "Unknown")))))
 
+enum ModuleStartupPropertiesCode {
+  ModuleStartupPropertiesCodeSuccess = 0,
+  ModuleStartupPropertiesCodePropertiesSyncFailure,
+  ModuleStartupPropertiesCodeClockSyncFailure,
+  ModuleStartupPropertiesCodeDelimiter
+};
+
+
 /**
  * This class represents the integration of all components (LCD, buttons, buzzer, etc).
  */
@@ -117,56 +125,6 @@ private:
   bool (*oneRunMode)();
 
   /**
-   * Start up all module's properties
-   *
-   * Retrieve credentials and other properties from FS and server and report actual ones.
-   *
-   * 1. Load properties from the file system (general properties/credentials not related to the framework).
-   * 0. Load properties from the file system (credentials related to the framework).
-   * 2. Pull/push properties from/to the server
-   * 3. Set time of actors with last known time
-   * 4. Find out real current time
-   * 5. Return success if properties and clock sync went well
-   *
-   */
-public:
-  bool startupProperties() {
-
-    log(CLASS_MODULE, Info, "# Loading general properties/creds stored in FS...");
-    getPropSync()->fsLoadActorsProps();
-
-    log(CLASS_MODULE, Info, "# Loading main4ino properties/creds stored in FS...");
-    getPropSync()->setLoginPass(apiDeviceLogin(), apiDevicePass()); // may override credentials loaded in steps above
-    getClockSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
-
-    log(CLASS_MODULE, Info, "# Syncing actors with main4ino server...");
-    bool oneRun = oneRunMode();
-    bool serSyncd = false;
-    if (oneRun) {
-      serSyncd = getPropSync()->pullActors(DEFAULT_PROP_SYNC_ATTEMPTS); // only pull, push is postponed
-    } else {
-      serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, false); // sync properties from the server
-    }
-
-    if (!serSyncd)
-      return false; // fail fast
-
-    time_t leftTime = getBot()->getClock()->currentTime();
-
-    Buffer timeAux(19);
-    log(CLASS_MODULE, Info, "# Previous actors' times: %s...", Timing::humanize(leftTime, &timeAux));
-    getBot()->setActorsTime(leftTime);
-
-    log(CLASS_MODULE, Info, "# Syncing clock...");
-    // sync real date / time on clock, block if a single run is requested
-    bool freezeTime = oneRun;
-    bool clockSyncd = getClockSync()->syncClock(freezeTime, DEFAULT_CLOCK_SYNC_ATTEMPTS);
-    log(CLASS_MODULE, Info, "# Current time: %s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
-
-    return clockSyncd;
-  }
-
-  /**
    * Core of mod4ino
    *
    * Module that provides:
@@ -217,6 +175,11 @@ public:
   }
 
 public:
+  /**
+   * Setup this module and the core components and the architecture.
+   *
+   * The Bot mode set will be the one returned by setupArchitecture().
+   */
   void setup(BotMode (*setupArchitecture)(),
              bool (*initWifiFunc)(),
              int (*httpPostFunc)(const char *url, const char *body, ParamStream *response, Table *headers),
@@ -270,6 +233,62 @@ public:
 
     getBot()->setMode(mode);
   }
+
+  /**
+   * Start up all module's properties
+   *
+   * Retrieve credentials and other properties from FS and server and report actual ones.
+   *
+   * 1. Load properties from the file system (general properties/credentials not related to the framework).
+   * 0. Load properties from the file system (credentials related to the framework).
+   * 2. Pull/push properties from/to the server
+   * 3. Set time of actors with last known time
+   * 4. Find out real current time
+   * 5. Return success if properties and clock sync went well
+   *
+   */
+public:
+  ModuleStartupPropertiesCode startupProperties() {
+
+    log(CLASS_MODULE, Info, "# Loading general properties/creds stored in FS...");
+    getPropSync()->fsLoadActorsProps();
+
+    log(CLASS_MODULE, Info, "# Loading main4ino properties/creds stored in FS...");
+    getPropSync()->setLoginPass(apiDeviceLogin(), apiDevicePass()); // may override credentials loaded in steps above
+    getClockSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
+
+    log(CLASS_MODULE, Info, "# Syncing actors with main4ino server...");
+    bool oneRun = oneRunMode();
+    PropSyncStatusCode serSyncd = PropSyncStatusCodeUnknown;
+    if (oneRun) {
+      serSyncd = getPropSync()->pullActors(DEFAULT_PROP_SYNC_ATTEMPTS); // only pull, push is postponed
+    } else {
+      serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, false); // sync properties from the server
+    }
+
+    if (getPropSync()->isFailure(serSyncd)) {
+      return ModuleStartupPropertiesCodePropertiesSyncFailure;
+    }
+
+    time_t leftTime = getBot()->getClock()->currentTime();
+
+    Buffer timeAux(19);
+    log(CLASS_MODULE, Info, "# Previous actors' times: %s...", Timing::humanize(leftTime, &timeAux));
+    getBot()->setActorsTime(leftTime);
+
+    log(CLASS_MODULE, Info, "# Syncing clock...");
+    // sync real date / time on clock, block if a single run is requested
+    bool freezeTime = oneRun;
+    bool clockSyncd = getClockSync()->syncClock(freezeTime, DEFAULT_CLOCK_SYNC_ATTEMPTS);
+    log(CLASS_MODULE, Info, "# Current time: %s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
+
+    if (!clockSyncd) {
+      return ModuleStartupPropertiesCodeClockSyncFailure;
+    }
+
+    return ModuleStartupPropertiesCodeSuccess;
+  }
+
 
   /**
    * Handle a user command.
@@ -433,6 +452,11 @@ public:
 public:
   SerBot *getBot() {
     return bot;
+  }
+
+public:
+  Clock *getClock() {
+    return clock;
   }
 
 public:

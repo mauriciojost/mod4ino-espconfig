@@ -41,7 +41,7 @@ enum SettingsProps {
   SettingsDebugProp = 0,    // boolean, define if the device is in debug mode
   SettingsVersionProp,      // string, defines the current version
   SettingsPeriodMsProp,     // period in msec for the device to wait until update clock and make actors catch up with acting (if any)
-  SettingsMiniPeriodMsProp, // period in msec for the device to got to sleep (and remain unresponsive from user) (only if no deep sleep)
+  SettingsMiniPeriodMsProp, // period in msec for the device to got to sleep before waking up if any interrupts (remaining unresponsive from user) (only if no deep sleep)
   SettingsWifiSsidProp,     // wifi ssid
   SettingsWifiPassProp,     // wifi pass
   SettingsPropsDelimiter    // amount of properties
