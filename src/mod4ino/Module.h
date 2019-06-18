@@ -136,9 +136,11 @@ private:
    *   Module* module = new Module();
    *   module->getActors()->add(n, (Actor *)actor1, ...);
    *   module->setup(...);
-   *   module->startupProperties(...);
-   *   while (true) {
-   *     module->loop();
+   *   ModuleStartupPropertiesCode s = module->startupProperties(...);
+   *   if (s == ModuleStartupPropertiesCodeSuccess) {
+   *     while (true) {
+   *       module->loop();
+   *     }
    *   }
    *
    */
@@ -187,7 +189,6 @@ public:
              void (*clearDeviceFunc)(),
              bool (*fileReadFunc)(const char *fname, Buffer *content),
              bool (*fileWriteFunc)(const char *fname, const char *content),
-             void (*abortFunc)(const char *msg),
              bool (*sleepInterruptableFunc)(time_t cycleBegin, time_t periodSec),
              void (*deepSleepNotInterruptableFunc)(time_t cycleBegin, time_t periodSec),
              void (*configureModeArchitectureFunc)(),

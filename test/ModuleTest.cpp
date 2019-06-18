@@ -220,10 +220,6 @@ void configureModeArchitecture() {
   log(CLASS_MAIN, Debug, "configureModeArchitecture()");
 }
 
-void abort(const char *msg) {
-  log(CLASS_MAIN, Debug, "abort('%s')", msg);
-}
-
 void test_basic_behaviour() {
   Module *m = new Module();
   TEST_ASSERT_EQUAL(0, (int)m->getBot()->getClock()->currentTime());
@@ -236,7 +232,6 @@ void test_basic_behaviour() {
            clearDevice,
            readFile,
            writeFile,
-           abort,
            sleepInterruptable,
            sleepNotInterruptable,
            configureModeArchitecture,
