@@ -380,11 +380,16 @@ public:
       if (c == NULL) {
         char ll = getLogLevel();
         log(CLASS_MODULE, Info, "Log level: %d", ll);
-        return InvalidArgs;
+      } else {
+        int ll = atoi(c);
+        setLogLevel(ll);
+        log(CLASS_MODULE, Info, "Log level: %d", ll);
       }
-      int ll = atoi(c);
-      setLogLevel(ll);
-      log(CLASS_MODULE, Info, "Log level: %d", ll);
+      logUser("Visible from now on:");
+      log(CLASS_MODULE, Error, "- Error");
+      log(CLASS_MODULE, Warn, "- Warn");
+      log(CLASS_MODULE, Info, "- Info");
+      log(CLASS_MODULE, Debug, "- Debug");
       return Executed;
     } else if (strcmp("wifissid", c) == 0) {
       c = strtok(NULL, " ");
