@@ -55,6 +55,7 @@ enum CmdExecStatus { NotFound = 0, InvalidArgs, Executed, ExecutedInterrupt, Cmd
 
 enum ModuleStartupPropertiesCode {
   ModuleStartupPropertiesCodeSuccess = 0,
+  ModuleStartupPropertiesCodeSkipped,
   ModuleStartupPropertiesCodePropertiesSyncFailure,
   ModuleStartupPropertiesCodeClockSyncFailure,
   ModuleStartupPropertiesCodeDelimiter
@@ -257,6 +258,10 @@ public:
    */
 public:
   ModuleStartupPropertiesCode startupProperties() {
+
+  	if (getBot()->getMode() != RunMode) {
+  		return ModuleStartupPropertiesCodeSkipped;
+  	}
 
     log(CLASS_MODULE, Info, "# Loading general properties/creds stored in FS...");
     getPropSync()->fsLoadActorsProps();
