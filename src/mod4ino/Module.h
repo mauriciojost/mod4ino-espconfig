@@ -16,7 +16,7 @@
 
 #define COMMAND_MAX_LENGTH 128
 
-#define PERIOD_CONFIGURE_MSEC 60000
+#define PERIOD_CONFIGURE_MSEC 1000
 
 #define HELP_COMMAND_CLI                                                                                                                   \
   "\n  MODULE HELP"                                                                                                                        \
