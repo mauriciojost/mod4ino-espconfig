@@ -590,8 +590,8 @@ public:
     	stopWifi();
       deepSleepNotInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     } else {
-      sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     	stopWifi();
+      sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     }
   }
 
