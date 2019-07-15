@@ -271,7 +271,7 @@ public:
     getClockSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
 
     log(CLASS_MODULE, Info, "# Syncing actors with main4ino server...");
-    bool oneRun = oneRunMode();
+    bool oneRun = oneRunModeSafe();
     PropSyncStatusCode serSyncd = PropSyncStatusCodeUnknown;
     if (oneRun) {
       serSyncd = getPropSync()->pullActors(DEFAULT_PROP_SYNC_ATTEMPTS); // only pull, push is postponed
@@ -580,7 +580,7 @@ public:
     time_t cycleBegin = now();
     runModeArchitecture();
     cycleBot(false, false, true);
-    if (oneRunMode()) {
+    if (oneRunModeSafe()) {
       // before finishing store in the server the last status of all actors
       // this includes the timing of the clock, that has progressed
       // and will allow the next run to start from where we left off
@@ -593,6 +593,11 @@ public:
     	stopWifi();
       sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     }
+  }
+
+private:
+  bool oneRunModeSafe() {
+  	return (oneRunMode == NULL? false: oneRunMode());
   }
 
 public:
