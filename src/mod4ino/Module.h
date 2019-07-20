@@ -74,6 +74,7 @@ private:
   Clock *clock;
   Settings *settings;
   SerBot *bot;
+  const char* description;
 
   // Initialization of wifi.
   bool (*initWifi)();
@@ -180,6 +181,8 @@ public:
     apiDeviceLogin = NULL;
     apiDevicePass = NULL;
     oneRunMode = NULL;
+
+    description = NULL;
   }
 
 public:
@@ -206,7 +209,8 @@ public:
              void (*testFunc)(),
              const char *(*apiDeviceLoginFunc)(),
              const char *(*apiDevicePassFunc)(),
-             bool (*oneRunModeFunc)()) {
+             bool (*oneRunModeFunc)()
+						 ) {
 
     // Unstable situation from now until the end of the function
     //
@@ -241,6 +245,13 @@ public:
     BotMode mode = setupArchitecture(); // module objects initialized, architecture can be initialized now
 
     getBot()->setMode(mode);
+  }
+
+public:
+  void setDescription(const char* d) {
+  	// Example:
+    // {"version":"1.0.0","json":[{"patterns": ["^.*.freq$"], "descriptions: ["Description here."],"examples": ["value -> Explanation"]}],
+  	description = d;
   }
 
   /**
@@ -295,6 +306,10 @@ public:
     bool freezeTime = oneRun;
     bool clockSyncd = getClockSync()->syncClock(freezeTime, DEFAULT_CLOCK_SYNC_ATTEMPTS);
     log(CLASS_MODULE, Info, "# Current time: %s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
+
+    if (description != NULL) {
+      getPropSync()->pushDescription(description);
+    }
 
     if (!clockSyncd) {
     	stopWifi();
