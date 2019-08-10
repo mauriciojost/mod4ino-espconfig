@@ -285,8 +285,10 @@ public:
     bool oneRun = oneRunModeSafe();
     PropSyncStatusCode serSyncd = PropSyncStatusCodeUnknown;
     if (oneRun) {
+      log(CLASS_MODULE, Info, "Only pull...");
       serSyncd = getPropSync()->pullActors(DEFAULT_PROP_SYNC_ATTEMPTS); // only pull, push is postponed
     } else {
+      log(CLASS_MODULE, Info, "Pull and push...");
       serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, false); // sync properties from the server
     }
 
