@@ -459,6 +459,10 @@ public:
 #ifdef INSECURE
     } else if (strcmp("cat", c) == 0) { // could be potentially used to display credentials
       const char *f = strtok(NULL, " ");
+      if (f == NULL) {
+        logRawUser("Argument needed:\n  cat <file>");
+        return InvalidArgs;
+      }
       Buffer buf(128);
       fileRead(f, &buf);
       logUser("### File: %s", f);
