@@ -18,16 +18,6 @@
 
 #define PERIOD_CONFIGURE_MSEC 1000
 
-// The module aims at waking up every X amount of deep slept seconds.
-// Imagine that we aim at waking up every hour.
-// A deep sleep of 3600 seconds could result in 3550 seconds (HW RTC not perfectly tuned).
-// If the processing finishes in 1 second, we will be ready in second 3551, so next wakeup will
-// be in 9 seconds, resulting in 2 wake-ups instead of 1 wake-up.
-// To prevent that from happening we add a tunable fixed supplement.
-#ifndef DEEP_SLEEP_SUPPLEMENT_SECS
-#define DEEP_SLEEP_SUPPLEMENT_SECS 60
-#endif // DEEP_SLEEP_SUPPLEMENT_SECS
-
 #define HELP_COMMAND_CLI                                                                                                                   \
   "\n  MODULE HELP"                                                                                                                        \
   "\n  int             : interrupt current ongoing action"                                                                                 \
@@ -619,7 +609,7 @@ public:
       // push properties to the server (with new props and new clock blocked timing)
       getPropSync()->pushActors(DEFAULT_PROP_SYNC_ATTEMPTS, true);
     	stopWifi();
-      deepSleepNotInterruptable(cycleBegin, (getSettings()->periodMsec() / 1000) + DEEP_SLEEP_SUPPLEMENT_SECS);
+      deepSleepNotInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     } else {
     	stopWifi();
       sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
