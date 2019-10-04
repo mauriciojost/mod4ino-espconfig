@@ -286,10 +286,10 @@ public:
     PropSyncStatusCode serSyncd = PropSyncStatusCodeUnknown;
     if (oneRun) {
       log(CLASS_MODULE, Info, "Only pull...");
-      serSyncd = getPropSync()->pullActors(DEFAULT_PROP_SYNC_ATTEMPTS); // only pull, push is postponed
+      serSyncd = getPropSync()->pullActors(); // only pull, push is postponed
     } else {
       log(CLASS_MODULE, Info, "Pull and push...");
-      serSyncd = getPropSync()->pullPushActors(DEFAULT_PROP_SYNC_ATTEMPTS, false); // sync properties from the server
+      serSyncd = getPropSync()->pullPushActors(false); // sync properties from the server
     }
 
     if (getPropSync()->isFailure(serSyncd)) {
@@ -607,7 +607,7 @@ public:
       // and will allow the next run to start from where we left off
       log(CLASS_MODULE, Info, "Pushing actors to server (onerun)...");
       // push properties to the server (with new props and new clock blocked timing)
-      getPropSync()->pushActors(DEFAULT_PROP_SYNC_ATTEMPTS, true);
+      getPropSync()->pushActors(true);
     	stopWifi();
       deepSleepNotInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     } else {
