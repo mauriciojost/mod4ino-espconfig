@@ -1,6 +1,6 @@
 {
   "name": "mod4ino",
-  "version": "1.7.0-SNAPSHOT",
+  "version": "1.7.1",
   "keywords": "module, device, bot, main4ino, arduino",
   "description": "Module based on main4ino",
   "repository": {
