@@ -37,6 +37,8 @@
   "\n  actone ...      : make actor <x> act"                                                                                               \
   "\n  wifissid ...    : set wifi ssid"                                                                                                    \
   "\n  wifipass ...    : set wifi pass"                                                                                                    \
+  "\n  wifissidb ...   : set wifi ssid (backup net)"                                                                                       \
+  "\n  wifipassb ...   : set wifi pass (backup net)"                                                                                       \
   "\n  cat ...         : show content of a file (only if in insecure mode)"                                                                \
   "\n  load            : load properties in persistent fs (mainly for credentials)"                                                        \
   "\n  store           : save properties in persistent fs (mainly for credentials)"                                                        \
@@ -425,6 +427,24 @@ public:
       }
       settings->setPass(c);
       log(CLASS_MODULE, Info, "Wifi pass: %s", settings->getPass());
+      return Executed;
+    } else if (strcmp("wifissidb", c) == 0) {
+      c = strtok(NULL, " ");
+      if (c == NULL) {
+        logRawUser("Argument needed:\n  wifissidb <ssid>");
+        return InvalidArgs;
+      }
+      settings->setSsidBackup(c);
+      log(CLASS_MODULE, Info, "Wifi ssidb: %s", settings->getSsidBackup());
+      return Executed;
+    } else if (strcmp("wifipassb", c) == 0) {
+      c = strtok(NULL, " ");
+      if (c == NULL) {
+        logRawUser("Argument needed:\n  wifipassb <pass>");
+        return InvalidArgs;
+      }
+      settings->setPassBackup(c);
+      log(CLASS_MODULE, Info, "Wifi passb: %s", settings->getPassBackup());
       return Executed;
     } else if (strcmp("wifi", c) == 0) {
       initWifi();

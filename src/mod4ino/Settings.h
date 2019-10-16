@@ -44,6 +44,8 @@ enum SettingsProps {
   SettingsMiniPeriodMsProp, // period in msec for the device to got to sleep before waking up if any interrupts (remaining unresponsive from user) (only if no deep sleep)
   SettingsWifiSsidProp,     // wifi ssid
   SettingsWifiPassProp,     // wifi pass
+  SettingsWifiSsidbProp,    // wifi ssid (backup net)
+  SettingsWifiPassbProp,    // wifi pass (backup net)
   SettingsPropsDelimiter    // amount of properties
 };
 
@@ -56,6 +58,8 @@ private:
   int miniperiodms;
   Buffer *ssid;
   Buffer *pass;
+  Buffer *ssidb;
+  Buffer *passb;
   Buffer *version;
   Metadata *md;
 
@@ -67,6 +71,12 @@ public:
 
     pass = new Buffer(CREDENTIAL_BUFFER_SIZE);
     pass->load(WIFI_PASSWORD_STEADY);
+
+    ssidb = new Buffer(CREDENTIAL_BUFFER_SIZE);
+    ssidb->load(WIFI_SSID_STEADY);
+
+    passb = new Buffer(CREDENTIAL_BUFFER_SIZE);
+    passb->load(WIFI_PASSWORD_STEADY);
 
     version = new Buffer(VERSION_BUFFER_SIZE);
 
@@ -94,6 +104,10 @@ public:
         return SENSITIVE_PROP_PREFIX "wifissid";
       case (SettingsWifiPassProp):
         return SENSITIVE_PROP_PREFIX "wifipass";
+      case (SettingsWifiSsidbProp):
+        return SENSITIVE_PROP_PREFIX "wifissidb";
+      case (SettingsWifiPassbProp):
+        return SENSITIVE_PROP_PREFIX "wifipassb";
       case (SettingsDebugProp):
         return DEBUG_PROP_PREFIX "debug";
       case (SettingsVersionProp):
@@ -126,6 +140,12 @@ public:
         break;
       case (SettingsWifiPassProp):
         setPropValue(m, targetValue, actualValue, pass);
+        break;
+      case (SettingsWifiSsidbProp):
+        setPropValue(m, targetValue, actualValue, ssidb);
+        break;
+      case (SettingsWifiPassbProp):
+        setPropValue(m, targetValue, actualValue, passb);
         break;
       default:
         break;
@@ -175,6 +195,29 @@ public:
       getMetadata()->changed();
     }
   }
+
+  const char *getSsidBackup() {
+    return ssidb->getBuffer();
+  }
+
+  void setSsidBackup(const char *s) {
+    if (!ssidb->equals(s)) {
+      ssidb->load(s);
+      getMetadata()->changed();
+    }
+  }
+
+  const char *getPassBackup() {
+    return passb->getBuffer();
+  }
+
+  void setPassBackup(const char *s) {
+    if (!passb->equals(s)) {
+      passb->load(s);
+      getMetadata()->changed();
+    }
+  }
+
 
   void setVersion(const char *v) {
     if (!version->equals(v)) {
