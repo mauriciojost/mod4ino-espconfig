@@ -63,7 +63,6 @@ enum ModuleStartupPropertiesCode {
   ModuleStartupPropertiesCodeDelimiter
 };
 
-
 /**
  * This class represents the integration of all components (LCD, buttons, buzzer, etc).
  */
@@ -76,7 +75,7 @@ private:
   Clock *clock;
   Settings *settings;
   SerBot *bot;
-  const char* description;
+  const char *description;
 
   // Initialization of wifi.
   bool (*initWifi)();
@@ -211,8 +210,7 @@ public:
              void (*testFunc)(),
              const char *(*apiDeviceLoginFunc)(),
              const char *(*apiDevicePassFunc)(),
-             bool (*oneRunModeFunc)()
-						 ) {
+             bool (*oneRunModeFunc)()) {
 
     // Unstable situation from now until the end of the function
     //
@@ -250,10 +248,10 @@ public:
   }
 
 public:
-  void setDescription(const char* d) {
-  	// Example:
+  void setDescription(const char *d) {
+    // Example:
     // {"version":"1.0.0","json":[{"patterns": ["^.*.freq$"], "descriptions: ["Description here."],"examples": ["value -> Explanation"]}],
-  	description = d;
+    description = d;
   }
 
   /**
@@ -272,9 +270,9 @@ public:
 public:
   ModuleStartupPropertiesCode startupProperties() {
 
-  	if (getBot()->getMode() != RunMode) {
-  		return ModuleStartupPropertiesCodeSkipped;
-  	}
+    if (getBot()->getMode() != RunMode) {
+      return ModuleStartupPropertiesCodeSkipped;
+    }
 
     log(CLASS_MODULE, Info, "# Loading general properties/creds stored in FS...");
     getPropSync()->fsLoadActorsProps();
@@ -295,7 +293,7 @@ public:
     }
 
     if (getPropSync()->isFailure(serSyncd)) {
-    	stopWifi();
+      stopWifi();
       return ModuleStartupPropertiesCodePropertiesSyncFailure;
     }
 
@@ -316,14 +314,13 @@ public:
     }
 
     if (!clockSyncd) {
-    	stopWifi();
+      stopWifi();
       return ModuleStartupPropertiesCodeClockSyncFailure;
     }
 
     stopWifi();
     return ModuleStartupPropertiesCodeSuccess;
   }
-
 
   /**
    * Handle a user command.
@@ -595,16 +592,21 @@ public:
 
 public:
   void getProps(const char *actorN) {
-    Buffer contentAuxBuffer(256);
+    Buffer contentAuxBuffer(64);
     Array<Actor *> *actors = bot->getActors();
     for (int i = 0; i < actors->size(); i++) {
       Actor *actor = actors->get(i);
+      log(CLASS_MODULE, Info, "# '%s'", actor->getName());
       if (actorN == NULL || strcmp(actor->getName(), actorN) == 0) {
-        bot->getPropsJson(&contentAuxBuffer, i, EXCLUSIVE_FILTER_MODE, FIRST_CHAR(SENSITIVE_PROP_PREFIX));
-        contentAuxBuffer.replace('{', ' ');
-        contentAuxBuffer.replace('}', ' ');
-        contentAuxBuffer.replace(',', '\n');
-        log(CLASS_MODULE, Info, "### %s\n%s", actor->getName(), contentAuxBuffer.getBuffer());
+        for (int p = 0; p < actor->getNroProps(); p++) {
+          const char *propName = actor->getPropName(p);
+          if (propName[0] == SENSITIVE_PROP_PREFIX[0]) { // sensitive
+            contentAuxBuffer.fill("(sensitive)");
+          } else {
+            actor->getPropValue(p, &contentAuxBuffer);
+          }
+          log(CLASS_MODULE, Info, " '%s'='%s'", propName, contentAuxBuffer.getBuffer());
+        }
       }
     }
   }
@@ -628,17 +630,17 @@ public:
       log(CLASS_MODULE, Info, "Pushing actors to server (onerun)...");
       // push properties to the server (with new props and new clock blocked timing)
       getPropSync()->pushActors(true);
-    	stopWifi();
+      stopWifi();
       deepSleepNotInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     } else {
-    	stopWifi();
+      stopWifi();
       sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     }
   }
 
 private:
   bool oneRunModeSafe() {
-  	return (oneRunMode == NULL? false: oneRunMode());
+    return (oneRunMode == NULL ? false : oneRunMode());
   }
 
 public:
