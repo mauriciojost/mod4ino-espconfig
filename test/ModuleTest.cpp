@@ -44,8 +44,7 @@ bool initWifiSimple() {
   return wifiConnected;
 }
 
-void stopWifi() { }
-
+void stopWifi() {}
 
 const char *apiDeviceLogin() {
   return "testdevice";
