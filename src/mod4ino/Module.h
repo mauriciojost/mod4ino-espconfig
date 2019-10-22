@@ -310,7 +310,10 @@ public:
     log(CLASS_MODULE, Info, "# Current time: %s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
 
     if (description != NULL) {
+      log(CLASS_MODULE, Info, "# Sending description...");
       getPropSync()->pushDescription(description);
+    } else {
+      log(CLASS_MODULE, Info, "# No description to send...");
     }
 
     if (!clockSyncd) {
