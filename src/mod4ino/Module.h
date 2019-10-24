@@ -633,10 +633,8 @@ public:
       log(CLASS_MODULE, Info, "Pushing actors to server (onerun)...");
       // push properties to the server (with new props and new clock blocked timing)
       getPropSync()->pushActors(true);
-      stopWifi();
       deepSleepNotInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     } else {
-      stopWifi();
       sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
     }
   }
