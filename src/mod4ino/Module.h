@@ -24,7 +24,7 @@
   "\n  mode [run,conf] : get or set the mode"                                                                                              \
   "\n  info            : show info about the device"                                                                                       \
   "\n  test            : test the architecture/hardware"                                                                                   \
-  "\n  update ...      : update the firmware with the given descriptor"                                                                    \
+  "\n  update ...      : update the firmware with the given target version"                                                                \
   "\n  wifi            : init steady wifi"                                                                                                 \
   "\n  wifistop        : stop steady wifi"                                                                                                 \
   "\n  get             : display actors properties"                                                                                        \
@@ -114,7 +114,7 @@ private:
   void (*test)();
 
   // Firmware update.
-  void (*update)(const char *descriptor);
+  void (*update)(const char *targetVersion, const char *currentVersion);
 
   // Retrieve the login for the main4ino API.
   const char *(*apiDeviceLogin)();
@@ -206,7 +206,7 @@ public:
              void (*runModeArchitectureFunc)(),
              CmdExecStatus (*commandArchitectureFunc)(const char *cmd),
              void (*infoFunc)(),
-             void (*updateFunc)(const char *descriptor),
+             void (*updateFunc)(const char *targetVersion, const char *currentVersion),
              void (*testFunc)(),
              const char *(*apiDeviceLoginFunc)(),
              const char *(*apiDevicePassFunc)(),
@@ -324,6 +324,7 @@ public:
     stopWifi();
     return ModuleStartupPropertiesCodeSuccess;
   }
+  }
 
   /**
    * Handle a user command.
@@ -384,12 +385,12 @@ public:
       test();
       return Executed;
     } else if (strcmp("update", c) == 0) {
-      const char *descriptor = strtok(NULL, " ");
-      if (descriptor == NULL) {
-        logRawUser("Arguments needed:\n  update <descriptor>");
+      const char *targetVersion = strtok(NULL, " ");
+      if (targetVersion == NULL) {
+        logRawUser("Arguments needed:\n  update <targetVersion>");
         return InvalidArgs;
       }
-      update(descriptor);
+      update(targetVersion, STRINGIFY(PROJ_VERSION));
       return Executed;
     } else if (strcmp("clear", c) == 0) {
       clearDevice();
