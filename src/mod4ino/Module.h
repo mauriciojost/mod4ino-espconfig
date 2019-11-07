@@ -324,7 +324,6 @@ public:
     stopWifi();
     return ModuleStartupPropertiesCodeSuccess;
   }
-  }
 
   /**
    * Handle a user command.
