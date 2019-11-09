@@ -346,7 +346,7 @@ public:
       const char *prop = strtok(NULL, " ");
       const char *v = strtok(NULL, " ");
       if (actor == NULL || prop == NULL || v == NULL) {
-        logRawUser("Arguments needed:\n  set <actor> <prop> <value>");
+        logRaw(CLASS_MODULE, User, "Arguments needed:\n  set <actor> <prop> <value>");
         return InvalidArgs;
       }
       log(CLASS_MODULE, Info, "-> Set %s.%s = %s", actor, prop, v);
@@ -364,7 +364,7 @@ public:
     } else if (strcmp("mode", c) == 0) {
       const char *m = strtok(NULL, " ");
       if (m == NULL) {
-        logUser("Mode: %s", getBot()->getModeName());
+        log(CLASS_MODULE, User, "Mode: %s", getBot()->getModeName());
         return Executed;
       } else if (strcmp("run", m) == 0) {
         log(CLASS_MODULE, Info, "-> Run mode");
@@ -386,7 +386,7 @@ public:
     } else if (strcmp("update", c) == 0) {
       const char *targetVersion = strtok(NULL, " ");
       if (targetVersion == NULL) {
-        logRawUser("Arguments needed:\n  update <targetVersion>");
+        logRaw(CLASS_MODULE, User, "Arguments needed:\n  update <targetVersion>");
         return InvalidArgs;
       }
       update(targetVersion, STRINGIFY(PROJ_VERSION));
@@ -404,7 +404,7 @@ public:
         setLogLevel(ll);
         log(CLASS_MODULE, Info, "Log level: %d", ll);
       }
-      logUser("Visible from now on:");
+      log(CLASS_MODULE, User, "Visible from now on:");
       log(CLASS_MODULE, Error, "- Error");
       log(CLASS_MODULE, Warn, "- Warn");
       log(CLASS_MODULE, Info, "- Info");
@@ -413,7 +413,7 @@ public:
     } else if (strcmp("wifissid", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
-        logRawUser("Argument needed:\n  wifissid <ssid>");
+        logRaw(CLASS_MODULE, User, "Argument needed:\n  wifissid <ssid>");
         return InvalidArgs;
       }
       settings->setSsid(c);
@@ -422,7 +422,7 @@ public:
     } else if (strcmp("wifipass", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
-        logRawUser("Argument needed:\n  wifipass <pass>");
+        logRaw(CLASS_MODULE, User, "Argument needed:\n  wifipass <pass>");
         return InvalidArgs;
       }
       settings->setPass(c);
@@ -431,7 +431,7 @@ public:
     } else if (strcmp("wifissidb", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
-        logRawUser("Argument needed:\n  wifissidb <ssid>");
+        logRaw(CLASS_MODULE, User, "Argument needed:\n  wifissidb <ssid>");
         return InvalidArgs;
       }
       settings->setSsidBackup(c);
@@ -440,7 +440,7 @@ public:
     } else if (strcmp("wifipassb", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
-        logRawUser("Argument needed:\n  wifipassb <pass>");
+        logRaw(CLASS_MODULE, User, "Argument needed:\n  wifipassb <pass>");
         return InvalidArgs;
       }
       settings->setPassBackup(c);
@@ -461,7 +461,7 @@ public:
     } else if (strcmp("actone", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
-        logRawUser("Argument needed:\n  actone <actorname>");
+        logRaw(CLASS_MODULE, User, "Argument needed:\n  actone <actorname>");
         return InvalidArgs;
       }
       actone(c);
@@ -480,14 +480,14 @@ public:
     } else if (strcmp("cat", c) == 0) { // could be potentially used to display credentials
       const char *f = strtok(NULL, " ");
       if (f == NULL) {
-        logRawUser("Argument needed:\n  cat <file>");
+        logRaw(CLASS_MODULE, User, "Argument needed:\n  cat <file>");
         return InvalidArgs;
       }
       Buffer buf(128);
       fileRead(f, &buf);
-      logUser("### File: %s", f);
-      logRawUser(buf.getBuffer());
-      logUser("###");
+      log(CLASS_MODULE, User, "### File: %s", f);
+      logRaw(CLASS_MODULE, User, buf.getBuffer());
+      log(CLASS_MODULE, User, "###");
       return Executed;
 #endif // INSECURE
     } else if (strcmp("load", c) == 0) {
@@ -495,7 +495,7 @@ public:
       log(CLASS_MODULE, Info, "Properties loaded from local copy");
       return Executed;
     } else if (strcmp("help", c) == 0 || strcmp("?", c) == 0) {
-      logRawUser(HELP_COMMAND_CLI);
+      logRaw(CLASS_MODULE, User, HELP_COMMAND_CLI);
       return commandArchitecture("?");
     } else {
       return commandArchitecture(c);
