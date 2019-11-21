@@ -47,6 +47,7 @@ enum SettingsProps {
   SettingsWifiPassProp,     // wifi pass
   SettingsWifiSsidbProp,    // wifi ssid (backup net)
   SettingsWifiPassbProp,    // wifi pass (backup net)
+  SettingsLogLevelProp,     // level of the log messages (0=Debug=verbose, 3=Error)
   SettingsPropsDelimiter    // amount of properties
 };
 
@@ -57,6 +58,7 @@ private:
   bool devDebug;
   int periodms;
   int miniperiodms;
+  int logLevel;
   Buffer *ssid;
   Buffer *pass;
   Buffer *ssidb;
@@ -84,6 +86,7 @@ public:
     devDebug = true;
     periodms = PERIOD_MSEC;
     miniperiodms = FRAG_TO_SLEEP_MS_MAX;
+    logLevel = (int)getLogLevel();
     md = new Metadata(n);
   }
 
@@ -117,6 +120,8 @@ public:
         return ADVANCED_PROP_PREFIX "periodms";
       case (SettingsMiniPeriodMsProp):
         return ADVANCED_PROP_PREFIX "mperiodms";
+      case (SettingsLogLevelProp):
+        return DEBUG_PROP_PREFIX "logl";
       default:
         return "";
     }
@@ -147,6 +152,12 @@ public:
         break;
       case (SettingsWifiPassbProp):
         setPropValue(m, targetValue, actualValue, passb);
+        break;
+      case (SettingsLogLevelProp):
+        setPropInteger(m, targetValue, actualValue, &logLevel);
+        if (m == SetCustomValue) {
+          setLogLevel((char)logLevel);
+        }
         break;
       default:
         break;
