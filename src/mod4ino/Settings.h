@@ -202,6 +202,7 @@ public:
         if (m == SetCustomValue) {
           setLogLevel((char)logLevel);
         }
+        break;
       case (SettingsLogOptionsProp):
         setPropValue(m, targetValue, actualValue, logOpts);
         if (m == SetCustomValue) {
