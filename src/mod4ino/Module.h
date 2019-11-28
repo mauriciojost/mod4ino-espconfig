@@ -420,7 +420,7 @@ public:
         setLogOptions(c);
         log(CLASS_MODULE, User, "Set log options: %s", c);
       }
-      logUser("Visible from now on:");
+      log(CLASS_MODULE, User, "Visible from now on:");
       log(CLASS_MODULE, Error, "- Error");
       log(CLASS_MODULE, Warn, "- Warn");
       log(CLASS_MODULE, Info, "- Info");
