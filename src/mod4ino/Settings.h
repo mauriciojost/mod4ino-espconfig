@@ -39,7 +39,7 @@
 #define VERSION_BUFFER_SIZE 32
 
 #define LOGOPTS_BUFFER_SIZE (4 * 8)
-#define LOGOPTS_DEFAULT "??0"
+#define LOGOPTS_DEFAULT "??0;"
 #define TARGET_BUFFER_SIZE 32
 #define SKIP_UPDATES_CODE "skip"
 #define UPDATE_COMMAND "update %s"
