@@ -11,6 +11,7 @@
 #include <main4ino/Table.h>
 #include <mod4ino/MsgClearMode.h>
 #include <mod4ino/Settings.h>
+#include <mod4ino/Status.h>
 
 #define CLASS_MODULE "MD"
 
@@ -47,14 +48,6 @@
   "\n  help            : show this help"                                                                                                   \
   "\n  (all messages are shown as info log level)"                                                                                         \
   "\n"
-
-enum CmdExecStatus { NotFound = 0, InvalidArgs, Executed, ExecutedInterrupt, CmdFailed };
-#define CMD_EXEC_STATUS(s)                                                                                                                 \
-  (s == NotFound                                                                                                                           \
-       ? "Not found"                                                                                                                       \
-       : (s == InvalidArgs                                                                                                                 \
-              ? "Invalid args"                                                                                                             \
-              : (s == Executed ? "Executed" : (s == ExecutedInterrupt ? "Executed w/int" : (s == CmdFailed ? "Failed" : "Unknown")))))
 
 enum ModuleStartupPropertiesCode {
   ModuleStartupPropertiesCodeSuccess = 0,
@@ -242,6 +235,8 @@ public:
 
     propSync->setup(bot, initWifi, httpGet, httpPost, fileRead, fileWrite);
     clockSync->setup(bot->getClock(), initWifi, httpGet);
+
+    settings->setup(commandArchitectureFunc);
 
     BotMode mode = setupArchitecture(); // module objects initialized, architecture can be initialized now
 
