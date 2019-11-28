@@ -31,6 +31,7 @@
   "\n  get ...         : display actor <actor> properties"                                                                                 \
   "\n  set ...         : set an actor property (example: 'set body msg0 HELLO')"                                                           \
   "\n  logl [...]      : get / change log level to <x> (0 is more verbose, to 3 least verbose)"                                            \
+  "\n  logo [...]      : get / change log options (examples: AA0;BB2;??4; means AA to DEBUG, BB to WARN, rest to USER)"                    \
   "\n  clear           : clear device (filesystem, crashes stacktrace, etc.)"                                                              \
   "\n  actall          : all act"                                                                                                          \
   "\n  touchall        : mark actors as 'changed' to force synchronization with the server"                                                \
@@ -398,13 +399,28 @@ public:
       c = strtok(NULL, " ");
       if (c == NULL) {
         char ll = getLogLevel();
-        log(CLASS_MODULE, Info, "Log level: %d", ll);
+        log(CLASS_MODULE, User, "Log level: %d", ll);
       } else {
         int ll = atoi(c);
         setLogLevel(ll);
-        log(CLASS_MODULE, Info, "Log level: %d", ll);
+        log(CLASS_MODULE, User, "Log level: %d", ll);
       }
       log(CLASS_MODULE, User, "Visible from now on:");
+      log(CLASS_MODULE, Error, "- Error");
+      log(CLASS_MODULE, Warn, "- Warn");
+      log(CLASS_MODULE, Info, "- Info");
+      log(CLASS_MODULE, Debug, "- Debug");
+      return Executed;
+    } else if (strcmp("logo", c) == 0) {
+      c = strtok(NULL, " ");
+      if (c == NULL) {
+        log(CLASS_MODULE, User, "Log options: %s", (getLogOptions()==NULL?"":getLogOptions()));
+        return Executed;
+      } else {
+        setLogOptions(c);
+        log(CLASS_MODULE, User, "Set log options: %s", c);
+      }
+      logUser("Visible from now on:");
       log(CLASS_MODULE, Error, "- Error");
       log(CLASS_MODULE, Warn, "- Warn");
       log(CLASS_MODULE, Info, "- Info");

@@ -37,6 +37,9 @@
 #define STATUS_BUFFER_SIZE 64
 #define VERSION_BUFFER_SIZE 32
 
+#define LOGOPTS_BUFFER_SIZE (4 * 8)
+#define LOGOPTS_DEFAULT "??0"
+
 enum SettingsProps {
   SettingsDebugProp = 0,    // boolean, define if the device is in debug mode
   SettingsVersionProp,      // string, defines the current version
@@ -48,6 +51,7 @@ enum SettingsProps {
   SettingsWifiSsidbProp,    // wifi ssid (backup net)
   SettingsWifiPassbProp,    // wifi pass (backup net)
   SettingsLogLevelProp,     // level of the log messages (0=Debug=verbose, 3=Error)
+  SettingsLogOptionsProp,   // options of the log messages (example: AA0;BB1;??0)
   SettingsPropsDelimiter    // amount of properties
 };
 
@@ -63,6 +67,7 @@ private:
   Buffer *pass;
   Buffer *ssidb;
   Buffer *passb;
+  Buffer *logOpts;
   Buffer *version;
   Metadata *md;
 
@@ -80,6 +85,9 @@ public:
 
     passb = new Buffer(CREDENTIAL_BUFFER_SIZE);
     passb->load(WIFI_PASSWORD_STEADY);
+
+    logOpts = new Buffer(LOGOPTS_BUFFER_SIZE);
+    logOpts->load(LOGOPTS_DEFAULT);
 
     version = new Buffer(VERSION_BUFFER_SIZE);
 
@@ -122,6 +130,8 @@ public:
         return ADVANCED_PROP_PREFIX "mperiodms";
       case (SettingsLogLevelProp):
         return DEBUG_PROP_PREFIX "logl";
+      case (SettingsLogOptionsProp):
+        return DEBUG_PROP_PREFIX "logo";
       default:
         return "";
     }
@@ -157,6 +167,11 @@ public:
         setPropInteger(m, targetValue, actualValue, &logLevel);
         if (m == SetCustomValue) {
           setLogLevel((char)logLevel);
+        }
+      case (SettingsLogOptionsProp):
+        setPropValue(m, targetValue, actualValue, logOpts);
+        if (m == SetCustomValue) {
+          setLogOptions(logOpts->getBuffer());
         }
         break;
       default:
