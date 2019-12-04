@@ -42,7 +42,6 @@
 #define LOGOPTS_DEFAULT "??0;"
 #define TARGET_BUFFER_SIZE 32
 #define SKIP_UPDATES_CODE "skip"
-#define UPDATE_COMMAND "update %s"
 
 enum SettingsProps {
   SettingsDebugProp = 0,    // boolean, define if the device is in debug mode
@@ -77,7 +76,7 @@ private:
   Buffer *version;
   Buffer *target;
   Metadata *md;
-  CmdExecStatus (*command)(const char *);
+  void (*update)(const char *targetVersion, const char *currentVersion);
 
 public:
   Settings(const char *n) {
@@ -108,7 +107,7 @@ public:
 
     target = new Buffer(TARGET_BUFFER_SIZE);
     target->load(SKIP_UPDATES_CODE);
-    command = NULL;
+    update = NULL;
   }
 
   const char *getName() {
@@ -123,11 +122,10 @@ public:
     }
     if (getTiming()->matches()) {
       const char *currVersion = STRINGIFY(PROJ_VERSION);
-      if (!target->equals(currVersion) && !target->equals(SKIP_UPDATES_CODE)) {
+      if (!target->equals(SKIP_UPDATES_CODE)) {
         log(CLASS_SETTINGS, Warn, "Have to update '%s'->'%s'", currVersion, target->getBuffer());
-        if (command != NULL) {
-          Buffer aux(64);
-          command(aux.fill(UPDATE_COMMAND, target->getBuffer()));
+        if (update != NULL) {
+          update(target->getBuffer(), currVersion);
         } else {
           log(CLASS_SETTINGS, Warn, "No init.");
         }
@@ -135,10 +133,9 @@ public:
     }
   }
 
-  void setup(CmdExecStatus (*cmd)(const char *)) {
-    command = cmd;
+  void setup(void (*u)(const char *targetVersion, const char *currentVersion)) {
+    update = u;
   }
-
 
   const char *getPropName(int propIndex) {
     switch (propIndex) {

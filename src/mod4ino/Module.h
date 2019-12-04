@@ -236,7 +236,7 @@ public:
     propSync->setup(bot, initWifi, httpGet, httpPost, fileRead, fileWrite);
     clockSync->setup(bot->getClock(), initWifi, httpGet);
 
-    settings->setup(commandArchitectureFunc);
+    settings->setup(update);
 
     BotMode mode = setupArchitecture(); // module objects initialized, architecture can be initialized now
 
