@@ -267,6 +267,7 @@ public:
   ModuleStartupPropertiesCode startupProperties() {
 
     if (getBot()->getMode() != RunMode) {
+      log(CLASS_MODULE, Info, "# Not in run mode, skip startup...");
       return ModuleStartupPropertiesCodeSkipped;
     }
 
@@ -281,14 +282,15 @@ public:
     bool oneRun = oneRunModeSafe();
     PropSyncStatusCode serSyncd = PropSyncStatusCodeUnknown;
     if (oneRun) {
-      log(CLASS_MODULE, Info, "Only pull...");
+      log(CLASS_MODULE, Info, "(onerun) Only pull...");
       serSyncd = getPropSync()->pullActors(); // only pull, push is postponed
     } else {
-      log(CLASS_MODULE, Info, "Pull and push...");
+      log(CLASS_MODULE, Info, "(!onerun) Pull and push...");
       serSyncd = getPropSync()->pullPushActors(false); // sync properties from the server
     }
 
     if (getPropSync()->isFailure(serSyncd)) {
+      log(CLASS_MODULE, Warn, "# Propsync failed...");
       stopWifi();
       return ModuleStartupPropertiesCodePropertiesSyncFailure;
     }
@@ -313,10 +315,12 @@ public:
     }
 
     if (!clockSyncd) {
+      log(CLASS_MODULE, Warn, "# Clocksinc failed...");
       stopWifi();
       return ModuleStartupPropertiesCodeClockSyncFailure;
     }
 
+    log(CLASS_MODULE, Info, "# Startup succeeded");
     stopWifi();
     return ModuleStartupPropertiesCodeSuccess;
   }
