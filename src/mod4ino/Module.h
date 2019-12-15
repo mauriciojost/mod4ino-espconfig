@@ -5,6 +5,8 @@
 #include <main4ino/Actor.h>
 #include <main4ino/Array.h>
 #include <main4ino/Clock.h>
+#include <main4ino/HttpMethods.h>
+#include <main4ino/Authenticable.h>
 #include <main4ino/ClockSync.h>
 #include <main4ino/PropSync.h>
 #include <main4ino/SerBot.h>
@@ -116,11 +118,8 @@ private:
   // Retrieve the password for the main4ino API.
   const char *(*apiDevicePass)();
 
-  // Regular HTTP POST.
-  int (*httpPost)(const char *url, const char *body, ParamStream *response, Table *headers);
-
-  // Regular HTTP GET.
-  int (*httpGet)(const char *url, ParamStream *response, Table *headers);
+  // Regular HTTP request.
+  int (*httpMethod)(HttpMethod m, const char *url, const char *body, ParamStream *response, Table *headers);
 
   // Defines if this module is aimed at a single execution (some devices need this, as deep sleep modes equal full restarts).
   bool (*oneRunMode)();
@@ -161,8 +160,7 @@ public:
     initWifi = NULL;
     stopWifi = NULL;
     clearDevice = NULL;
-    httpGet = NULL;
-    httpPost = NULL;
+    httpMethod = NULL;
     sleepInterruptable = NULL;
     deepSleepNotInterruptable = NULL;
     configureModeArchitecture = NULL;
@@ -189,8 +187,7 @@ public:
   void setup(BotMode (*setupArchitecture)(),
              bool (*initWifiFunc)(),
              void (*stopWifiFunc)(),
-             int (*httpPostFunc)(const char *url, const char *body, ParamStream *response, Table *headers),
-             int (*httpGetFunc)(const char *url, ParamStream *response, Table *headers),
+             int (*httpMethodFunc)(HttpMethod m, const char *url, const char *body, ParamStream *response, Table *headers),
              void (*clearDeviceFunc)(),
              bool (*fileReadFunc)(const char *fname, Buffer *content),
              bool (*fileWriteFunc)(const char *fname, const char *content),
@@ -229,12 +226,11 @@ public:
     update = updateFunc;
     apiDeviceLogin = apiDeviceLoginFunc;
     apiDevicePass = apiDevicePassFunc;
-    httpGet = httpGetFunc;
-    httpPost = httpPostFunc;
+    httpMethod = httpMethodFunc;
     oneRunMode = oneRunModeFunc;
 
-    propSync->setup(bot, initWifi, httpGet, httpPost, fileRead, fileWrite);
-    clockSync->setup(bot->getClock(), initWifi, httpGet);
+    propSync->setup(bot, initWifi, httpMethod, fileRead, fileWrite);
+    clockSync->setup(bot->getClock(), initWifi, httpMethod);
 
     settings->setup(update);
 

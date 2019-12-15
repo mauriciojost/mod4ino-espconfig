@@ -11,3 +11,5 @@
 /src/Time.h
 /src/TimeLib.h
 /coverage.xml
+/*.gcda
+/*.gcno

@@ -10,9 +10,6 @@
 
 #define CLASS_MAIN "ModuleTest"
 
-#define REQ_POST 1
-#define REQ_GET 2
-
 const char *replyEmptyBody = "{}";
 
 bool wifiConnected;
@@ -67,13 +64,13 @@ bool initWifi(const char *ssid, const char *pass, bool skipIfConnected, int retr
   return wifiConnected;
 }
 
-int httpRequest(int req, const char *url, const char *body, ParamStream *response, Table *headers) {
+int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *response, Table *headers) {
   char str1[128];
   char str2[128];
   long l1;
 
   // RESTORE BY ACTOR
-  if (req == REQ_GET && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/actors/%[a-z]/last", str1, str2) == 2 &&
+  if (req == HttpGet && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/actors/%[a-z]/last", str1, str2) == 2 &&
       strcmp(str1, "reports") == 0) {
     if (strcmp(str2, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded last '%s'", str1);
@@ -84,12 +81,12 @@ int httpRequest(int req, const char *url, const char *body, ParamStream *respons
     return HTTP_OK;
 
     // RETRIEVE TARGETS NOT CONSUMED (I.E. CLOSED STATUS)
-  } else if (req == REQ_GET && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets?status=C&ids=true", url) == 0) {
+  } else if (req == HttpGet && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets?status=C&ids=true", url) == 0) {
     response->contentBuffer()->load("{\"ids\": [1]}");
     return HTTP_OK;
 
     // PULL BY ACTOR
-  } else if (req == REQ_GET &&
+  } else if (req == HttpGet &&
              sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) == 3 &&
              strcmp(str1, "targets") == 0) {
     if (strcmp(str2, "settings") == 0) {
@@ -102,17 +99,17 @@ int httpRequest(int req, const char *url, const char *body, ParamStream *respons
     return HTTP_OK;
 
     // PUSH BY ACTOR (REPORTS)
-  } else if (req == REQ_POST &&
+  } else if (req == HttpPost &&
              sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) == 3) {
     return HTTP_CREATED;
 
     // MARK REPORT AS CLOSED
     // MARK TARGET AS CONSUMED
-  } else if (req == REQ_POST && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld?status=", str1, &l1) == 2) {
+  } else if (req == HttpPost && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld?status=", str1, &l1) == 2) {
     return HTTP_OK;
 
     // PRE-PUSH BY ACTOR (REPORTS)
-  } else if (req == REQ_POST && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/", str1) == 1) {
+  } else if (req == HttpPost && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/", str1) == 1) {
     if (strcmp(str1, "reports") == 0) {
       response->contentBuffer()->load("{\"id\": 1}");
       return HTTP_CREATED;
@@ -121,9 +118,13 @@ int httpRequest(int req, const char *url, const char *body, ParamStream *respons
     }
 
     // RETRIEVE TIME
-  } else if (req == REQ_GET && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/time?timezone=%s", str1) == 1) {
+  } else if (req == HttpGet && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/time?timezone=%s", str1) == 1) {
     response->contentBuffer()->load("{\"formatted\":\"1970-01-01T00:00:01\"}");
     return HTTP_OK;
+
+  // LOGIN CALL
+  } else if (req == HttpPost && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/session"  , url) == 0) {
+    return HTTP_CREATED;
 
     // UNKNOWN
   } else {
@@ -131,14 +132,6 @@ int httpRequest(int req, const char *url, const char *body, ParamStream *respons
     TEST_FAIL();
     return 0;
   }
-}
-
-int httpGet(const char *url, ParamStream *response, Table *headers) {
-  return httpRequest(REQ_GET, url, NULL, response, headers);
-}
-
-int httpPost(const char *url, const char *body, ParamStream *response, Table *headers) {
-  return httpRequest(REQ_POST, url, body, response, headers);
 }
 
 void clearDevice() {
@@ -230,8 +223,7 @@ void test_basic_behaviour() {
   m->setup(setupArchitecture,
            initWifiSimple,
            stopWifi,
-           httpPost,
-           httpGet,
+           httpRequest,
            clearDevice,
            readFile,
            writeFile,
