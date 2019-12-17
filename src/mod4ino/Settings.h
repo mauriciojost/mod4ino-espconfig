@@ -43,6 +43,9 @@
 #define TARGET_BUFFER_SIZE 32
 #define SKIP_UPDATES_CODE "skip"
 
+#define ALIAS_BUFFER_SIZE 16
+#define DEFAULT_ALIAS "alias"
+
 enum SettingsProps {
   SettingsDebugProp = 0,    // boolean, define if the device is in debug mode
   SettingsVersionProp,      // string, defines the current version
@@ -57,6 +60,7 @@ enum SettingsProps {
   SettingsLogOptionsProp,   // options of the log messages (example: AA0;BB1;??0)
   SettingsUpdateTargetProp, // target version to upgrade the firmware to
   SettingsUpdateFreqProp,   // frequency of upgrade
+  SettingsAliasProp,        // alias name for this device
   SettingsPropsDelimiter    // amount of properties
 };
 
@@ -75,6 +79,7 @@ private:
   Buffer *logOpts;
   Buffer *version;
   Buffer *target;
+  Buffer *alias;
   Metadata *md;
   void (*update)(const char *targetVersion, const char *currentVersion);
 
@@ -92,6 +97,9 @@ public:
 
     passb = new Buffer(CREDENTIAL_BUFFER_SIZE);
     passb->load(WIFI_PASSWORD_STEADY);
+
+    alias = new Buffer(ALIAS_BUFFER_SIZE);
+    alias->load(DEFAULT_ALIAS);
 
     logOpts = new Buffer(LOGOPTS_BUFFER_SIZE);
     logOpts->load(LOGOPTS_DEFAULT);
@@ -163,6 +171,8 @@ public:
         return ADVANCED_PROP_PREFIX "target";
       case (SettingsUpdateFreqProp):
         return ADVANCED_PROP_PREFIX "freq";
+      case (SettingsAliasProp):
+        return "alias";
       default:
         return "";
     }
@@ -211,6 +221,9 @@ public:
         break;
       case (SettingsUpdateFreqProp):
         setPropTiming(m, targetValue, actualValue, getTiming());
+        break;
+      case (SettingsAliasProp):
+        setPropValue(m, targetValue, actualValue, alias);
         break;
       default:
         break;
@@ -296,6 +309,10 @@ public:
 
   int miniPeriodMsec() {
     return miniperiodms;
+  }
+
+  const char* getAlias() {
+    return alias->getBuffer();
   }
 };
 
