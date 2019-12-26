@@ -177,7 +177,7 @@ public:
     apiDeviceLogin = NULL;
     apiDevicePass = NULL;
     oneRunMode = NULL;
-    getLogBufferFunc = NULL;
+    getLogBuffer = NULL;
 
     description = NULL;
   }
