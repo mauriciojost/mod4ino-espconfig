@@ -124,6 +124,9 @@ private:
   // Defines if this module is aimed at a single execution (some devices need this, as deep sleep modes equal full restarts).
   bool (*oneRunMode)();
 
+  // Defines how to retrieve the buffer containing the logs to be pushed (if any)
+  Buffer* (*getLogBuffer)();
+
   /**
    * Core of mod4ino
    *
@@ -174,8 +177,27 @@ public:
     apiDeviceLogin = NULL;
     apiDevicePass = NULL;
     oneRunMode = NULL;
+    getLogBufferFunc = NULL;
 
     description = NULL;
+  }
+
+private: bool pushLogs() {
+
+    if (getLogBuffer == NULL) 
+      return true;
+
+    log(CLASS_MODULE, Debug, "Push logs...");
+    PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
+    if (getPropSync()->isFailure(status)) {
+      log(CLASS_MODULE, Warn, "Failed to push logs...");
+      return false;
+    } else {
+      log(CLASS_MODULE, Debug, "Pushed.");
+      getLogBuffer()->clear();
+      return true;
+    }
+
   }
 
 public:
@@ -201,7 +223,9 @@ public:
              void (*testFunc)(),
              const char *(*apiDeviceLoginFunc)(),
              const char *(*apiDevicePassFunc)(),
-             bool (*oneRunModeFunc)()) {
+             bool (*oneRunModeFunc)(),
+             Buffer* (*getLogBufferFunc)()
+             ) {
 
     // Unstable situation from now until the end of the function
     //
@@ -228,6 +252,7 @@ public:
     apiDevicePass = apiDevicePassFunc;
     httpMethod = httpMethodFunc;
     oneRunMode = oneRunModeFunc;
+    getLogBuffer = getLogBufferFunc;
 
     propSync->setup(bot, initWifi, httpMethod, fileRead, fileWrite);
     clockSync->setup(bot->getClock(), initWifi, httpMethod);
@@ -315,6 +340,8 @@ public:
     }
 
     log(CLASS_MODULE, Info, "# Startup succeeded");
+
+    pushLogs();
 
     return ModuleStartupPropertiesCodeSuccess;
   }
@@ -662,9 +689,10 @@ public:
   void loop() {
     switch (getBot()->getMode()) {
       case (RunMode):
-        log(CLASS_MODULE, Info, "\n\nBEGIN LOOP (ver: %s)", STRINGIFY(PROJ_VERSION));
+        log(CLASS_MODULE, Info, "# BLOOP (ver: %s)", STRINGIFY(PROJ_VERSION));
         runMode();
-        log(CLASS_MODULE, Info, "END LOOP\n\n");
+        log(CLASS_MODULE, Info, "# ELOOP");
+        pushLogs();
         break;
       case (ConfigureMode):
         configureMode();

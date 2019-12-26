@@ -237,7 +237,9 @@ void test_basic_behaviour() {
            testArchitecture,
            apiDeviceLogin,
            apiDevicePass,
-           oneRunModeOff);
+           oneRunModeOff,
+           NULL // logs to push
+           );
   ModuleStartupPropertiesCode s = m->startupProperties();
 
   TEST_ASSERT_EQUAL(ModuleStartupPropertiesCodeSuccess, s);          // success
