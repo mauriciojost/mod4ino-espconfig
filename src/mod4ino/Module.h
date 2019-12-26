@@ -287,7 +287,6 @@ public:
 
     if (getPropSync()->isFailure(serSyncd)) {
       log(CLASS_MODULE, Warn, "# Propsync failed...");
-      stopWifi();
       return ModuleStartupPropertiesCodePropertiesSyncFailure;
     }
 
@@ -312,12 +311,11 @@ public:
 
     if (!clockSyncd) {
       log(CLASS_MODULE, Warn, "# Clocksinc failed...");
-      stopWifi();
       return ModuleStartupPropertiesCodeClockSyncFailure;
     }
 
     log(CLASS_MODULE, Info, "# Startup succeeded");
-    stopWifi();
+
     return ModuleStartupPropertiesCodeSuccess;
   }
 
