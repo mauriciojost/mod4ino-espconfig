@@ -88,11 +88,11 @@ private:
   // Deep sleep function not interruptable (after sleep it resets)
   void (*deepSleepNotInterruptable)(time_t cycleBegin, time_t periodSec);
 
-  // Run one cycle for the architecture (configure mode).
-  void (*configureModeArchitecture)();
+  // Run one cycle for the being on configure mode (no actors cycle in this mode).
+  void (*cycleConfigureMode)();
 
-  // Run one cycle for the architecture (run mode).
-  void (*runModeArchitecture)();
+  // Run one cycle for the being on run mode (before actors cycle).
+  void (*preCycleRunMode)();
 
   // Function that executes a command from the underlying architecture point of view.
   CmdExecStatus (*commandArchitecture)(const char *cmd);
@@ -166,8 +166,8 @@ public:
     httpMethod = NULL;
     sleepInterruptable = NULL;
     deepSleepNotInterruptable = NULL;
-    configureModeArchitecture = NULL;
-    runModeArchitecture = NULL;
+    cycleConfigureMode = NULL;
+    preCycleRunMode = NULL;
     commandArchitecture = NULL;
     fileRead = NULL;
     fileWrite = NULL;
@@ -215,8 +215,8 @@ public:
              bool (*fileWriteFunc)(const char *fname, const char *content),
              bool (*sleepInterruptableFunc)(time_t cycleBegin, time_t periodSec),
              void (*deepSleepNotInterruptableFunc)(time_t cycleBegin, time_t periodSec),
-             void (*configureModeArchitectureFunc)(),
-             void (*runModeArchitectureFunc)(),
+             void (*cycleConfigureModeFunc)(),
+             void (*preCycleRunModeFunc)(),
              CmdExecStatus (*commandArchitectureFunc)(const char *cmd),
              void (*infoFunc)(),
              void (*updateFunc)(const char *targetVersion, const char *currentVersion),
@@ -240,8 +240,8 @@ public:
     clearDevice = clearDeviceFunc;
     sleepInterruptable = sleepInterruptableFunc;
     deepSleepNotInterruptable = deepSleepNotInterruptableFunc;
-    configureModeArchitecture = configureModeArchitectureFunc;
-    runModeArchitecture = runModeArchitectureFunc;
+    cycleConfigureMode = cycleConfigureModeFunc;
+    preCycleRunMode = preCycleRunModeFunc;
     commandArchitecture = commandArchitectureFunc;
     fileRead = fileReadFunc;
     fileWrite = fileWriteFunc;
@@ -653,14 +653,14 @@ public:
 public:
   void configureMode() {
     time_t cycleBegin = now();
-    configureModeArchitecture();
+    cycleConfigureMode();
     sleepInterruptable(cycleBegin, PERIOD_CONFIGURE_MSEC / 1000);
   }
 
 public:
   void runMode() {
     time_t cycleBegin = now();
-    runModeArchitecture();
+    preCycleRunMode();
     cycleBot(false, false, true);
     if (oneRunModeSafe()) {
       // before finishing store in the server the last status of all actors
