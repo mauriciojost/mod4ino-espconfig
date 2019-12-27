@@ -184,7 +184,7 @@ public:
 
 private: bool pushLogs() {
 
-    if (getLogBuffer == NULL) 
+    if (getLogBuffer == NULL || getLogBuffer() == NULL) 
       return true;
 
     log(CLASS_MODULE, Debug, "Push logs...");
