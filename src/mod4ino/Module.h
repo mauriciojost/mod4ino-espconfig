@@ -264,6 +264,13 @@ public:
     getBot()->setMode(mode);
   }
 
+private: 
+  PropSyncStatusCode failed(const char *msg, PropSyncStatusCode code) {
+      log(CLASS_MODULE, Warn, msg);
+      getBot()->setMode(ConfigureMode); // this guarantees no actor acts
+      return code;
+  }
+
 public:
   void setDescription(const char *d) {
     // Example:
@@ -288,8 +295,7 @@ public:
   ModuleStartupPropertiesCode startupProperties() {
 
     if (getBot()->getMode() != RunMode) {
-      log(CLASS_MODULE, Info, "# Not in run mode, skip startup...");
-      return ModuleStartupPropertiesCodeSkipped;
+      return failed("Not in run mode, skip startup...", ModuleStartupPropertiesCodeSkipped);
     }
 
     log(CLASS_MODULE, Info, "# Loading general properties/creds stored in FS...");
@@ -311,8 +317,7 @@ public:
     }
 
     if (getPropSync()->isFailure(serSyncd)) {
-      log(CLASS_MODULE, Warn, "# Propsync failed...");
-      return ModuleStartupPropertiesCodePropertiesSyncFailure;
+      return failed("# Propsync failed...", ModuleStartupPropertiesCodePropertiesSyncFailure);
     }
 
     time_t leftTime = getBot()->getClock()->currentTime();
@@ -335,8 +340,7 @@ public:
     }
 
     if (!clockSyncd) {
-      log(CLASS_MODULE, Warn, "# Clocksinc failed...");
-      return ModuleStartupPropertiesCodeClockSyncFailure;
+      return failed("# Clocksinc failed...", ModuleStartupPropertiesCodeClockSyncFailure);
     }
 
     log(CLASS_MODULE, Info, "# Startup succeeded");
