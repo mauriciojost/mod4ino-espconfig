@@ -41,7 +41,8 @@
 #define LOGOPTS_BUFFER_SIZE (4 * 8)
 #define LOGOPTS_DEFAULT "??0;"
 #define TARGET_BUFFER_SIZE 32
-#define SKIP_UPDATES_CODE "skip"
+#define SKIP_UPDATES_CODE "SKIP"
+#define LATEST_UPDATES_CODE "LATEST"
 
 #define ALIAS_BUFFER_SIZE 16
 #define DEFAULT_ALIAS "alias"
@@ -114,7 +115,7 @@ public:
     md->getTiming()->setFreq("~24h");
 
     target = new Buffer(TARGET_BUFFER_SIZE);
-    target->load(SKIP_UPDATES_CODE);
+    target->load(LATEST_UPDATES_CODE);
     update = NULL;
   }
 
@@ -168,9 +169,9 @@ public:
       case (SettingsLogOptionsProp):
         return DEBUG_PROP_PREFIX "logo";
       case (SettingsUpdateTargetProp):
-        return ADVANCED_PROP_PREFIX "target";
+        return ADVANCED_PROP_PREFIX "utarget";
       case (SettingsUpdateFreqProp):
-        return ADVANCED_PROP_PREFIX "freq";
+        return ADVANCED_PROP_PREFIX "ufreq";
       case (SettingsAliasProp):
         return "alias";
       default:
