@@ -206,7 +206,10 @@ public:
    *
    * The Bot mode set will be the one returned by setupArchitecture().
    */
-  void setup(BotMode (*setupArchitecture)(),
+  void setup(
+             const char *project,
+             const char *platform,
+             BotMode (*setupArchitecture)(),
              bool (*initWifiFunc)(),
              void (*stopWifiFunc)(),
              int (*httpMethodFunc)(HttpMethod m, const char *url, const char *body, ParamStream *response, Table *headers),
@@ -257,7 +260,7 @@ public:
     propSync->setup(bot, initWifi, httpMethod, fileRead, fileWrite);
     clockSync->setup(bot->getClock(), initWifi, httpMethod);
 
-    settings->setup(update);
+    settings->setup(project, platform, update);
 
     BotMode mode = setupArchitecture(); // module objects initialized, architecture can be initialized now
 
@@ -265,7 +268,7 @@ public:
   }
 
 private: 
-  PropSyncStatusCode failed(const char *msg, PropSyncStatusCode code) {
+  ModuleStartupPropertiesCode failed(const char *msg, ModuleStartupPropertiesCode code) {
       log(CLASS_MODULE, Warn, msg);
       getBot()->setMode(ConfigureMode); // this guarantees no actor acts
       return code;

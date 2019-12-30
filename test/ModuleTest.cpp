@@ -220,7 +220,9 @@ void test_basic_behaviour() {
   TEST_ASSERT_EQUAL(0, (int)m->getBot()->getClock()->currentTime());
 
   log(CLASS_MAIN, Debug, "### module->setup(...)");
-  m->setup(setupArchitecture,
+  m->setup("testproject",
+           "testplatform",
+           setupArchitecture,
            initWifiSimple,
            stopWifi,
            httpRequest,

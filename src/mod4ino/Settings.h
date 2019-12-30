@@ -47,6 +47,12 @@
 #define ALIAS_BUFFER_SIZE 16
 #define DEFAULT_ALIAS "alias"
 
+#define PROJECT_BUFFER_SIZE 16
+#define DEFAULT_PROJECT "project"
+
+#define PLATFORM_BUFFER_SIZE 16
+#define DEFAULT_PLATFORM "platform"
+
 enum SettingsProps {
   SettingsDebugProp = 0,    // boolean, define if the device is in debug mode
   SettingsVersionProp,      // string, defines the current version
@@ -62,6 +68,8 @@ enum SettingsProps {
   SettingsUpdateTargetProp, // target version to upgrade the firmware to
   SettingsUpdateFreqProp,   // frequency of upgrade
   SettingsAliasProp,        // alias name for this device
+  SettingsProjectProp,      // project name
+  SettingsPlatformProp,     // platform name
   SettingsPropsDelimiter    // amount of properties
 };
 
@@ -81,6 +89,8 @@ private:
   Buffer *version;
   Buffer *target;
   Buffer *alias;
+  Buffer *project;
+  Buffer *platform;
   Metadata *md;
   void (*update)(const char *targetVersion, const char *currentVersion);
 
@@ -101,6 +111,12 @@ public:
 
     alias = new Buffer(ALIAS_BUFFER_SIZE);
     alias->load(DEFAULT_ALIAS);
+
+    project = new Buffer(PROJECT_BUFFER_SIZE);
+    project->load(DEFAULT_PROJECT);
+
+    platform = new Buffer(PLATFORM_BUFFER_SIZE);
+    platform->load(DEFAULT_PLATFORM);
 
     logOpts = new Buffer(LOGOPTS_BUFFER_SIZE);
     logOpts->load(LOGOPTS_DEFAULT);
@@ -142,8 +158,14 @@ public:
     }
   }
 
-  void setup(void (*u)(const char *targetVersion, const char *currentVersion)) {
+  void setup(
+    const char *pr,
+    const char *pl,
+    void (*u)(const char *targetVersion, const char *currentVersion)
+  ) {
     update = u;
+    setProject(pr);
+    setPlatform(pl);
   }
 
   const char *getPropName(int propIndex) {
@@ -174,6 +196,10 @@ public:
         return ADVANCED_PROP_PREFIX "ufreq";
       case (SettingsAliasProp):
         return "alias";
+      case (SettingsProjectProp):
+        return "project";
+      case (SettingsPlatformProp):
+        return "platform";
       default:
         return "";
     }
@@ -225,6 +251,12 @@ public:
         break;
       case (SettingsAliasProp):
         setPropValue(m, targetValue, actualValue, alias);
+        break;
+      case (SettingsProjectProp):
+        setPropValue(m, targetValue, actualValue, project);
+        break;
+      case (SettingsPlatformProp):
+        setPropValue(m, targetValue, actualValue, platform);
         break;
       default:
         break;
@@ -315,6 +347,23 @@ public:
   const char* getAlias() {
     return alias->getBuffer();
   }
+
+  const char* getProject() {
+    return project->getBuffer();
+  }
+
+  const char* getPlatform() {
+    return platform->getBuffer();
+  }
+
+  void setProject(const char *p) {
+    project->load(p);
+  }
+
+  void setPlatform(const char *p) {
+    platform->load(p);
+  }
+
 };
 
 #endif // GLOBAL_INC
