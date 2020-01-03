@@ -64,7 +64,7 @@ bool initWifi(const char *ssid, const char *pass, bool skipIfConnected, int retr
   return wifiConnected;
 }
 
-int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *response, Table *headers) {
+int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *response, Table *headers, const char *fingerprint) {
   char str1[128];
   char str2[128];
   long l1;

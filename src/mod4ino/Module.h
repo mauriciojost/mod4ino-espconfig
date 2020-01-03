@@ -119,7 +119,7 @@ private:
   const char *(*apiDevicePass)();
 
   // Regular HTTP request.
-  int (*httpMethod)(HttpMethod m, const char *url, const char *body, ParamStream *response, Table *headers);
+  int (*httpMethod)(HttpMethod m, const char *url, const char *body, ParamStream *response, Table *headers, const char *fingerprint);
 
   // Defines if this module is aimed at a single execution (some devices need this, as deep sleep modes equal full restarts).
   bool (*oneRunMode)();
@@ -212,7 +212,7 @@ public:
              BotMode (*setupArchitecture)(),
              bool (*initWifiFunc)(),
              void (*stopWifiFunc)(),
-             int (*httpMethodFunc)(HttpMethod m, const char *url, const char *body, ParamStream *response, Table *headers),
+             int (*httpMethodFunc)(HttpMethod m, const char *url, const char *body, ParamStream *response, Table *headers, const char *fingerprint),
              void (*clearDeviceFunc)(),
              bool (*fileReadFunc)(const char *fname, Buffer *content),
              bool (*fileWriteFunc)(const char *fname, const char *content),
