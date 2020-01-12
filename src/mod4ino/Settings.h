@@ -140,13 +140,17 @@ public:
   }
 
   void act() {
+    const char *currVersion = STRINGIFY(PROJ_VERSION);
     static bool first = true;
     if (first) {
       first = false;
-      version->load(STRINGIFY(PROJ_VERSION));
+      if (!version->equals(currVersion)) {
+        log(CLASS_SETTINGS, Warn, "Upgraded: '%s'->'%s'", version->getBuffer(), currVersion);
+        version->load(currVersion);
+        getMetadata()->changed();
+      }
     }
     if (getTiming()->matches()) {
-      const char *currVersion = STRINGIFY(PROJ_VERSION);
       if (!target->equals(SKIP_UPDATES_CODE)) {
         log(CLASS_SETTINGS, Warn, "Have to update '%s'->'%s'", currVersion, target->getBuffer());
         if (update != NULL) {
