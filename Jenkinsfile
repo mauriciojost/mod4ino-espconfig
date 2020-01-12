@@ -26,8 +26,9 @@ pipeline {
             script {
               sshagent(['bitbucket_key']) {
                 wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'xterm']) {
+                  sh 'git submodule update --init --recursive'
+                  sh '.mavarduino/create_links'
                   sh 'export GIT_COMMITTER_NAME=jenkinsbot && export GIT_COMMITTER_EMAIL=mauriciojostx@gmail.com && set && ./pull_dependencies -p -l'
-                    
                 }
               }
             }
