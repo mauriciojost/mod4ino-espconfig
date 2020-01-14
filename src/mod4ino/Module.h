@@ -187,7 +187,8 @@ private: bool pushLogs() {
     if (getLogBuffer == NULL || getLogBuffer() == NULL) 
       return true;
 
-    log(CLASS_MODULE, Debug, "Push logs...");
+    int len = getLogBuffer()->getLength();
+    log(CLASS_MODULE, Debug, "Push logs(%d)...", len);
     PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
     if (getPropSync()->isFailure(status)) {
       log(CLASS_MODULE, Warn, "Failed to push logs...");
@@ -698,8 +699,8 @@ public:
       case (RunMode):
         log(CLASS_MODULE, Info, "# BLOOP (ver: %s)", STRINGIFY(PROJ_VERSION));
         runMode();
-        log(CLASS_MODULE, Info, "# ELOOP");
         pushLogs();
+        log(CLASS_MODULE, Info, "# ELOOP");
         break;
       case (ConfigureMode):
         configureMode();
