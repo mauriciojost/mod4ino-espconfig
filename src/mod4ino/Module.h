@@ -673,17 +673,6 @@ public:
     time_t cycleBegin = now();
     preCycleRunMode();
     cycleBot(false, false, true);
-    if (oneRunModeSafe()) {
-      // before finishing store in the server the last status of all actors
-      // this includes the timing of the clock, that has progressed
-      // and will allow the next run to start from where we left off
-      log(CLASS_MODULE, Info, "Pushing actors to server (onerun)...");
-      // push properties to the server (with new props and new clock blocked timing)
-      getPropSync()->pushActors(true);
-      deepSleepNotInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
-    } else {
-      sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
-    }
   }
 
 private:
@@ -702,8 +691,20 @@ public:
       case (RunMode):
         log(CLASS_MODULE, Info, "# BLOOP (ver: %s)", STRINGIFY(PROJ_VERSION));
         runMode();
-        pushLogs();
         log(CLASS_MODULE, Info, "# ELOOP");
+        if (oneRunModeSafe()) {
+          // before finishing store in the server the last status of all actors
+          // this includes the timing of the clock, that has progressed
+          // and will allow the next run to start from where we left off
+          log(CLASS_MODULE, Info, "Pushing actors to server (onerun)...");
+          // push properties to the server (with new props and new clock blocked timing)
+          getPropSync()->pushActors(true);
+          pushLogs();
+          deepSleepNotInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
+        } else {
+          pushLogs();
+          sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
+        }
         break;
       case (ConfigureMode):
         configureMode();
