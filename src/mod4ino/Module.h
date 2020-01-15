@@ -663,14 +663,11 @@ public:
 
 public:
   void configureMode() {
-    time_t cycleBegin = now();
     cycleConfigureMode();
-    sleepInterruptable(cycleBegin, PERIOD_CONFIGURE_MSEC / 1000);
   }
 
 public:
   void runMode() {
-    time_t cycleBegin = now();
     preCycleRunMode();
     cycleBot(false, false, true);
   }
@@ -687,6 +684,7 @@ public:
 
 public:
   void loop() {
+    time_t cycleBegin = now();
     switch (getBot()->getMode()) {
       case (RunMode):
         log(CLASS_MODULE, Info, "# BLOOP (ver: %s)", STRINGIFY(PROJ_VERSION));
@@ -708,6 +706,7 @@ public:
         break;
       case (ConfigureMode):
         configureMode();
+        sleepInterruptable(cycleBegin, PERIOD_CONFIGURE_MSEC / 1000);
         break;
       default:
         break;
