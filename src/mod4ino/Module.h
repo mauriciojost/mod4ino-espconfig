@@ -187,6 +187,9 @@ private: bool pushLogs() {
     if (getLogBuffer == NULL || getLogBuffer() == NULL) 
       return true;
 
+    if (!settings->getDebug())
+      return true;
+
     int len = getLogBuffer()->getLength();
     log(CLASS_MODULE, Debug, "Push logs(%d)...", len);
     PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
