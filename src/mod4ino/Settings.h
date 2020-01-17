@@ -24,15 +24,9 @@
 #define WIFI_PASSWORD_STEADY "???"
 #endif // WIFI_PASSWORD_STEADY
 
-#ifndef PERIOD_SEC
-#define PERIOD_SEC 60
-#endif // PERIOD_SEC
-
 #ifndef FRAG_TO_SLEEP_MS_MAX
 #define FRAG_TO_SLEEP_MS_MAX 1000 // maximum sleeping time for which the module can be unresponsive
 #endif                            // FRAG_TO_SLEEP_MS_MAX
-
-#define PERIOD_MSEC (PERIOD_SEC * 1000)
 
 #define CREDENTIAL_BUFFER_SIZE 64
 #define STATUS_BUFFER_SIZE 64
@@ -67,6 +61,7 @@ enum SettingsProps {
   SettingsLogOptionsProp,   // options of the log messages (example: AA0;BB1;??0)
   SettingsUpdateTargetProp, // target version to upgrade the firmware to
   SettingsUpdateFreqProp,   // frequency of upgrade
+  SettingsBatchFreqProp,    // frequency of batch runs for all actors
   SettingsAliasProp,        // alias name for this device
   SettingsProjectProp,      // project name
   SettingsPlatformProp,     // platform name
@@ -78,7 +73,6 @@ class Settings : public Actor {
 private:
   const char *name;
   bool devDebug;
-  int periodms;
   int miniperiodms;
   int logLevel;
   Buffer *ssid;
@@ -92,6 +86,7 @@ private:
   Buffer *project;
   Buffer *platform;
   Metadata *md;
+  Timing *batchTiming;
   void (*update)(const char *targetVersion, const char *currentVersion);
 
 public:
@@ -124,11 +119,12 @@ public:
     version = new Buffer(VERSION_BUFFER_SIZE);
 
     devDebug = true;
-    periodms = PERIOD_MSEC;
     miniperiodms = FRAG_TO_SLEEP_MS_MAX;
     logLevel = (int)getLogLevel();
     md = new Metadata(n);
     md->getTiming()->setFreq("~24h");
+    batchTiming = new Timing();
+    batchTiming->setFreq("~1m");
 
     target = new Buffer(TARGET_BUFFER_SIZE);
     target->load(LATEST_UPDATES_CODE);
@@ -160,6 +156,7 @@ public:
         }
       }
     }
+    batchTiming->setCurrentTime(getTiming()->getCurrentTime()); // align with time
   }
 
   void setup(
@@ -186,8 +183,6 @@ public:
         return DEBUG_PROP_PREFIX "debug";
       case (SettingsVersionProp):
         return DEBUG_PROP_PREFIX "version";
-      case (SettingsPeriodMsProp):
-        return ADVANCED_PROP_PREFIX "periodms";
       case (SettingsMiniPeriodMsProp):
         return ADVANCED_PROP_PREFIX "mperiodms";
       case (SettingsLogLevelProp):
@@ -198,6 +193,8 @@ public:
         return ADVANCED_PROP_PREFIX "utarget";
       case (SettingsUpdateFreqProp):
         return ADVANCED_PROP_PREFIX "ufreq";
+      case (SettingsBatchFreqProp):
+        return ADVANCED_PROP_PREFIX "bfreq";
       case (SettingsAliasProp):
         return "alias";
       case (SettingsProjectProp):
@@ -216,9 +213,6 @@ public:
         break;
       case (SettingsVersionProp):
         setPropValue(m, targetValue, actualValue, version);
-        break;
-      case (SettingsPeriodMsProp):
-        setPropInteger(m, targetValue, actualValue, &periodms);
         break;
       case (SettingsMiniPeriodMsProp):
         setPropInteger(m, targetValue, actualValue, &miniperiodms);
@@ -252,6 +246,9 @@ public:
         break;
       case (SettingsUpdateFreqProp):
         setPropTiming(m, targetValue, actualValue, getTiming());
+        break;
+      case (SettingsBatchFreqProp):
+        setPropTiming(m, targetValue, actualValue, batchTiming);
         break;
       case (SettingsAliasProp):
         setPropValue(m, targetValue, actualValue, alias);
@@ -340,12 +337,12 @@ public:
     }
   }
 
-  int periodMsec() {
-    return periodms;
-  }
-
   int miniPeriodMsec() {
     return miniperiodms;
+  }
+
+  Timing* getBatchTiming() {
+    return batchTiming;
   }
 
   const char* getAlias() {

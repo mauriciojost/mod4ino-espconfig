@@ -19,7 +19,8 @@
 
 #define COMMAND_MAX_LENGTH 128
 
-#define PERIOD_CONFIGURE_MSEC 1000
+#define PERIOD_CONFIGURE_SEC 1
+#define MAX_BATCH_PERIOD_SECS 172800 // 2 days
 
 #define HELP_COMMAND_CLI                                                                                                                   \
   "\n  MODULE HELP"                                                                                                                        \
@@ -591,7 +592,7 @@ public:
    */
 public:
   void actall() {
-    for (int i = 0; i < getBot()->getActors()->size(); i++) {
+    for (unsigned int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
       log(CLASS_MODULE, Info, "One off: %s", a->getName());
       a->oneOff();
@@ -603,7 +604,7 @@ public:
    */
 public:
   void touchall() {
-    for (int i = 0; i < getBot()->getActors()->size(); i++) {
+    for (unsigned int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
       Metadata *m = a->getMetadata();
       log(CLASS_MODULE, Info, "Touch: %s", a->getName());
@@ -616,7 +617,7 @@ public:
    */
 public:
   void actone(const char *actorName) {
-    for (int i = 0; i < getBot()->getActors()->size(); i++) {
+    for (unsigned int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
       if (strcmp(a->getName(), actorName) == 0) {
         log(CLASS_MODULE, Info, "One off: %s", a->getName());
@@ -644,7 +645,7 @@ public:
   void getProps(const char *actorN) {
     Buffer contentAuxBuffer(64);
     Array<Actor *> *actors = bot->getActors();
-    for (int i = 0; i < actors->size(); i++) {
+    for (unsigned int i = 0; i < actors->size(); i++) {
       Actor *actor = actors->get(i);
       log(CLASS_MODULE, Info, "# '%s'", actor->getName());
       if (actorN == NULL || strcmp(actor->getName(), actorN) == 0) {
@@ -682,6 +683,25 @@ public:
     return actors;
   }
 
+private:
+  time_t periodToDeepSleep() {
+    Timing* timing = getSettings()->getBatchTiming();
+    time_t toMatch = timing->secsToMatch(MAX_BATCH_PERIOD_SECS);
+    time_t fromMatch = timing->secsFromMatch(MAX_BATCH_PERIOD_SECS);
+    log(CLASS_MODULE, Debug, "DS (from %lu | to %lu)", (unsigned long)fromMatch, (unsigned long)toMatch);
+    if (toMatch <= fromMatch) { // deep sleep time happens faster than real time (for example, 1m deep sleep = 50s real time)
+      Timing tAlmost;
+      tAlmost.setCurrentTime(timing->getCurrentTime() + toMatch);
+      tAlmost.setFreq(timing->getFreq());
+      time_t yield = toMatch + tAlmost.secsToMatch(MAX_BATCH_PERIOD_SECS);
+      log(CLASS_MODULE, Debug, "uC faster, DS: %lu", (unsigned long)yield);
+      return yield;
+    } else {
+      log(CLASS_MODULE, Debug, "uC slower, DS: %lu", (unsigned long)toMatch);
+      return toMatch;
+    }
+  }
+
 public:
   void loop() {
     time_t cycleBegin = now();
@@ -697,16 +717,17 @@ public:
           log(CLASS_MODULE, Info, "Pushing actors to server (onerun)...");
           // push properties to the server (with new props and new clock blocked timing)
           getPropSync()->pushActors(true);
+          time_t s = periodToDeepSleep();
           pushLogs();
-          deepSleepNotInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
+          deepSleepNotInterruptable(cycleBegin, s);
         } else {
           pushLogs();
-          sleepInterruptable(cycleBegin, getSettings()->periodMsec() / 1000);
+          sleepInterruptable(cycleBegin, getSettings()->getBatchTiming()->secsToMatch(MAX_BATCH_PERIOD_SECS));
         }
         break;
       case (ConfigureMode):
         configureMode();
-        sleepInterruptable(cycleBegin, PERIOD_CONFIGURE_MSEC / 1000);
+        sleepInterruptable(cycleBegin, PERIOD_CONFIGURE_SEC);
         break;
       default:
         break;
