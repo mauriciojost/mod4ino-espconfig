@@ -74,7 +74,7 @@ int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *
       strcmp(str1, "reports") == 0) {
     if (strcmp(str2, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded last '%s'", str1);
-      response->contentBuffer()->load("{\"+periodms\":\"10\"}");
+      response->contentBuffer()->load("{\"+mperiodms\":\"10\"}");
     } else {
       response->contentBuffer()->load(replyEmptyBody);
     }
@@ -91,7 +91,7 @@ int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *
              strcmp(str1, "targets") == 0) {
     if (strcmp(str2, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded target '%s' from %ld", str1, l1);
-      response->contentBuffer()->load("{\"+periodms\":\"20\"}");
+      response->contentBuffer()->load("{\"+mperiodms\":\"20\"}");
     } else {
       log(CLASS_MAIN, Info, "Settings loaded generic");
       response->contentBuffer()->load(replyEmptyBody);
@@ -246,12 +246,12 @@ void test_basic_behaviour() {
 
   TEST_ASSERT_EQUAL(ModuleStartupPropertiesCodeSuccess, s);          // success
   TEST_ASSERT_EQUAL(1, (int)m->getBot()->getClock()->currentTime()); // remote clock sync took place
-  TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec());             // loaded target value
+  TEST_ASSERT_EQUAL(20, m->getSettings()->miniPeriodMsec());             // loaded target value
 
   log(CLASS_MAIN, Debug, "### module->loop()");
   m->getPropSync()->getTiming()->setFreq("~1s");
   m->loop();
-  TEST_ASSERT_EQUAL(20, m->getSettings()->periodMsec()); // no change
+  TEST_ASSERT_EQUAL(20, m->getSettings()->miniPeriodMsec()); // no change
 }
 
 int main() {
