@@ -689,15 +689,16 @@ private:
     time_t toMatch = timing->secsToMatch(MAX_BATCH_PERIOD_SECS);
     time_t fromMatch = timing->secsFromMatch(MAX_BATCH_PERIOD_SECS);
     if (toMatch < fromMatch) { // toMatch is closer, it's the good timing, is in the future, i.e. deep sleep completed faster than it should have
-      log(CLASS_MODULE, Debug, "DS (|<-%lu   ^%lu->|)", (unsigned long)fromMatch, (unsigned long)toMatch);
+      log(CLASS_MODULE, Debug, "DS (|<---%lu   ^%lu->|)", (unsigned long)fromMatch, (unsigned long)toMatch);
       Timing tAlmost;
-      tAlmost.setCurrentTime(timing->getCurrentTime() + toMatch);
+      tAlmost.setCurrentTime(timing->getCurrentTime() + toMatch + 1);
       tAlmost.setFreq(timing->getFreq());
-      time_t yield = toMatch + tAlmost.secsToMatch(MAX_BATCH_PERIOD_SECS);
-      log(CLASS_MODULE, Debug, "uC faster, DS: %lu", (unsigned long)yield);
+      time_t toMatchAfter = tAlmost.secsToMatch(MAX_BATCH_PERIOD_SECS);
+      time_t yield = toMatch + toMatchAfter;
+      log(CLASS_MODULE, Debug, "uC faster, DS: (%lu+)%lu", (unsigned long)toMatch, (unsigned long)toMatchAfter);
       return yield;
     } else { // our timing is in the past, uC was slower and passed the good timing
-      log(CLASS_MODULE, Debug, "DS (|<-%lu^   %lu->|)", (unsigned long)fromMatch, (unsigned long)toMatch);
+      log(CLASS_MODULE, Debug, "DS (|<-%lu^   %lu--->|)", (unsigned long)fromMatch, (unsigned long)toMatch);
       log(CLASS_MODULE, Debug, "uC slower, DS: %lu", (unsigned long)toMatch);
       return toMatch;
     }
@@ -715,7 +716,7 @@ public:
           // before finishing store in the server the last status of all actors
           // this includes the timing of the clock, that has progressed
           // and will allow the next run to start from where we left off
-          log(CLASS_MODULE, Info, "Pushing actors to server (onerun)...");
+          log(CLASS_MODULE, Info, "Pushing(onerun)...");
           // push properties to the server (with new props and new clock blocked timing)
           getPropSync()->pushActors(true);
           time_t s = periodToDeepSleep();
