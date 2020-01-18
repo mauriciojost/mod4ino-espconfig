@@ -688,15 +688,16 @@ private:
     Timing* timing = getSettings()->getBatchTiming();
     time_t toMatch = timing->secsToMatch(MAX_BATCH_PERIOD_SECS);
     time_t fromMatch = timing->secsFromMatch(MAX_BATCH_PERIOD_SECS);
-    log(CLASS_MODULE, Debug, "DS (from %lu | to %lu)", (unsigned long)fromMatch, (unsigned long)toMatch);
-    if (toMatch <= fromMatch) { // deep sleep time happens faster than real time (for example, 1m deep sleep = 50s real time)
+    if (toMatch < fromMatch) { // toMatch is closer, it's the good timing, is in the future, i.e. deep sleep completed faster than it should have
+      log(CLASS_MODULE, Debug, "DS (|<-%lu   ^%lu->|)", (unsigned long)fromMatch, (unsigned long)toMatch);
       Timing tAlmost;
       tAlmost.setCurrentTime(timing->getCurrentTime() + toMatch);
       tAlmost.setFreq(timing->getFreq());
       time_t yield = toMatch + tAlmost.secsToMatch(MAX_BATCH_PERIOD_SECS);
       log(CLASS_MODULE, Debug, "uC faster, DS: %lu", (unsigned long)yield);
       return yield;
-    } else {
+    } else { // our timing is in the past, uC was slower and passed the good timing
+      log(CLASS_MODULE, Debug, "DS (|<-%lu^   %lu->|)", (unsigned long)fromMatch, (unsigned long)toMatch);
       log(CLASS_MODULE, Debug, "uC slower, DS: %lu", (unsigned long)toMatch);
       return toMatch;
     }
