@@ -74,7 +74,7 @@ int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *
       strcmp(str1, "reports") == 0) {
     if (strcmp(str2, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded last '%s'", str1);
-      response->contentBuffer()->load("{\"+mperiodms\":\"10\"}");
+      response->contentBuffer()->load("{\"+bfreq\":\"~10s\"}");
     } else {
       response->contentBuffer()->load(replyEmptyBody);
     }
@@ -91,7 +91,7 @@ int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *
              strcmp(str1, "targets") == 0) {
     if (strcmp(str2, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded target '%s' from %ld", str1, l1);
-      response->contentBuffer()->load("{\"+mperiodms\":\"20\"}");
+      response->contentBuffer()->load("{\"+bfreq\":\"~20s\"}");
     } else {
       log(CLASS_MAIN, Info, "Settings loaded generic");
       response->contentBuffer()->load(replyEmptyBody);
@@ -105,7 +105,7 @@ int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *
 
     // MARK REPORT AS CLOSED
     // MARK TARGET AS CONSUMED
-  } else if (req == HttpPost && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld?status=", str1, &l1) == 2) {
+  } else if (req == HttpUpdate && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld?status=", str1, &l1) == 2) {
     return HTTP_OK;
 
     // PRE-PUSH BY ACTOR (REPORTS)
@@ -128,7 +128,7 @@ int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *
 
     // UNKNOWN
   } else {
-    log(CLASS_MAIN, Debug, "Unknown url '%s'", url);
+    log(CLASS_MAIN, Debug, "Unknown request %s->%s ", HTTP_METHOD_STR(req), url);
     TEST_FAIL();
     return 0;
   }
@@ -246,12 +246,12 @@ void test_basic_behaviour() {
 
   TEST_ASSERT_EQUAL(ModuleStartupPropertiesCodeSuccess, s);          // success
   TEST_ASSERT_EQUAL(1, (int)m->getBot()->getClock()->currentTime()); // remote clock sync took place
-  TEST_ASSERT_EQUAL(20, m->getSettings()->miniPeriodMsec());             // loaded target value
+  TEST_ASSERT_EQUAL_STRING("~20s", m->getSettings()->getBatchTiming()->getFreq());             // loaded target value
 
   log(CLASS_MAIN, Debug, "### module->loop()");
   m->getPropSync()->getTiming()->setFreq("~1s");
   m->loop();
-  TEST_ASSERT_EQUAL(20, m->getSettings()->miniPeriodMsec()); // no change
+  TEST_ASSERT_EQUAL_STRING("~20s", m->getSettings()->getBatchTiming()->getFreq()); // no change
 }
 
 int main() {
