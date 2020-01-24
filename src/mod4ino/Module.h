@@ -208,13 +208,12 @@ private: bool pushLogs() {
 public:
   /**
    * Setup this module and the core components and the architecture.
-   *
-   * The Bot mode set will be the one returned by setupArchitecture().
+   * 
+   * WARNING: none of the passed functions should depend on this instance being already initialized. 
    */
   void setup(
              const char *project,
              const char *platform,
-             BotMode (*setupArchitecture)(),
              bool (*initWifiFunc)(),
              void (*stopWifiFunc)(),
              int (*httpMethodFunc)(HttpMethod m, const char *url, const char *body, ParamStream *response, Table *headers, const char *fingerprint),
@@ -234,14 +233,6 @@ public:
              bool (*oneRunModeFunc)(),
              Buffer* (*getLogBufferFunc)()
              ) {
-
-    // Unstable situation from now until the end of the function
-    //
-    // Actors are being initialized. When they act, they use callback functions that
-    // may trigger low level calls (like IO, LCD, etc) which are not set up yet.
-    // As a good practice, actors should NOT do any low level calls until they are executed the method act().
-    // Setup of low level calls happens in setupArchitecture().
-    // After that, actors will be eventually asked for acting.
 
     initWifi = initWifiFunc;
     stopWifi = stopWifiFunc;
@@ -266,10 +257,6 @@ public:
     clockSync->setup(bot->getClock(), initWifi, httpMethod);
 
     settings->setup(project, platform, update);
-
-    BotMode mode = setupArchitecture(); // module objects initialized, architecture can be initialized now
-
-    getBot()->setMode(mode);
   }
 
 private: 

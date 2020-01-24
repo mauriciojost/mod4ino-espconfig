@@ -218,11 +218,10 @@ void configureModeArchitecture() {
 void test_basic_behaviour() {
   Module *m = new Module();
   TEST_ASSERT_EQUAL(0, (int)m->getBot()->getClock()->currentTime());
-
+  BotMode mode = setupArchitecture();
   log(CLASS_MAIN, Debug, "### module->setup(...)");
   m->setup("testproject",
            "testplatform",
-           setupArchitecture,
            initWifiSimple,
            stopWifi,
            httpRequest,
@@ -242,6 +241,7 @@ void test_basic_behaviour() {
            oneRunModeOff,
            NULL // logs to push
            );
+  m->getBot()->setMode(mode);
   ModuleStartupPropertiesCode s = m->startupProperties();
 
   TEST_ASSERT_EQUAL(ModuleStartupPropertiesCodeSuccess, s);          // success
