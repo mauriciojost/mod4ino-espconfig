@@ -580,7 +580,7 @@ public:
   void actall() {
     for (unsigned int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
-      log(CLASS_MODULE, Info, "One off: %s", a->getName());
+      log(CLASS_MODULE, Info, "Oneoff:%s", a->getName());
       a->oneOff();
     }
   }
@@ -593,7 +593,7 @@ public:
     for (unsigned int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
       Metadata *m = a->getMetadata();
-      log(CLASS_MODULE, Info, "Touch: %s", a->getName());
+      log(CLASS_MODULE, Info, "Touch:%s", a->getName());
       m->changed();
     }
   }
@@ -606,7 +606,7 @@ public:
     for (unsigned int i = 0; i < getBot()->getActors()->size(); i++) {
       Actor *a = getBot()->getActors()->get(i);
       if (strcmp(a->getName(), actorName) == 0) {
-        log(CLASS_MODULE, Info, "One off: %s", a->getName());
+        log(CLASS_MODULE, Info, "Oneoff:%s", a->getName());
         a->oneOff();
       }
     }
@@ -695,14 +695,14 @@ public:
     time_t cycleBegin = now();
     switch (getBot()->getMode()) {
       case (RunMode):
-        log(CLASS_MODULE, Info, "# BLOOP (ver: %s)", STRINGIFY(PROJ_VERSION));
+        log(CLASS_MODULE, Info, "#BLOOP(ver: %s)", STRINGIFY(PROJ_VERSION));
         runMode();
-        log(CLASS_MODULE, Info, "# ELOOP");
+        log(CLASS_MODULE, Info, "#ELOOP");
         if (oneRunModeSafe()) {
           // before finishing store in the server the last status of all actors
           // this includes the timing of the clock, that has progressed
           // and will allow the next run to start from where we left off
-          log(CLASS_MODULE, Info, "Pushing(onerun)...");
+          log(CLASS_MODULE, Info, "Push(1run)");
           // push properties to the server (with new props and new clock blocked timing)
           getPropSync()->pushActors(true);
           time_t s = periodToDeepSleep();
