@@ -192,13 +192,13 @@ private: bool pushLogs() {
       return true;
 
     int len = getLogBuffer()->getLength();
-    log(CLASS_MODULE, Debug, "Push logs(%d)...", len);
+    log(CLASS_MODULE, Debug, "PLogs(%d)...", len);
     PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
     if (getPropSync()->isFailure(status)) {
-      log(CLASS_MODULE, Warn, "Failed to push logs...");
+      log(CLASS_MODULE, Warn, "PLogs KO");
       return false;
     } else {
-      log(CLASS_MODULE, Debug, "Pushed.");
+      log(CLASS_MODULE, Debug, "PLogs OK");
       getLogBuffer()->clear();
       return true;
     }
@@ -261,9 +261,9 @@ public:
 
 private: 
   ModuleStartupPropertiesCode failed(const char *msg, ModuleStartupPropertiesCode code) {
-      log(CLASS_MODULE, Warn, msg);
-      getBot()->setMode(ConfigureMode); // this guarantees no actor acts
-      return code;
+     log(CLASS_MODULE, Warn, msg);
+     getBot()->setMode(ConfigureMode); // this guarantees no actor acts
+     return code;
   }
 
 public:
@@ -290,55 +290,54 @@ public:
   ModuleStartupPropertiesCode startupProperties() {
 
     if (getBot()->getMode() != RunMode) {
-      return failed("Not in run mode, skip startup...", ModuleStartupPropertiesCodeSkipped);
+      return failed("Skip STUP", ModuleStartupPropertiesCodeSkipped);
     }
 
-    log(CLASS_MODULE, Info, "# Loading general properties/creds stored in FS...");
+    log(CLASS_MODULE, Info, "LGProps/FS");
     getPropSync()->fsLoadActorsProps();
 
-    log(CLASS_MODULE, Info, "# Loading main4ino properties/creds stored in FS...");
+    log(CLASS_MODULE, Info, "LM4INOProps/FS");
     getPropSync()->setLoginPass(apiDeviceLogin(), apiDevicePass()); // may override credentials loaded in steps above
     getClockSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
 
-    log(CLASS_MODULE, Info, "# Syncing actors with main4ino server...");
+    log(CLASS_MODULE, Info, "SyncM4INO");
     bool oneRun = oneRunModeSafe();
     PropSyncStatusCode serSyncd = PropSyncStatusCodeUnknown;
     if (oneRun) {
-      log(CLASS_MODULE, Info, "(onerun) Only pull...");
+      log(CLASS_MODULE, Info, "(1run)Pull");
       serSyncd = getPropSync()->pullActors(); // only pull, push is postponed
     } else {
-      log(CLASS_MODULE, Info, "(!onerun) Pull and push...");
+      log(CLASS_MODULE, Info, "(!1run)Pull&push");
       serSyncd = getPropSync()->pullPushActors(false); // sync properties from the server
     }
 
     if (getPropSync()->isFailure(serSyncd)) {
-      return failed("# Propsync failed...", ModuleStartupPropertiesCodePropertiesSyncFailure);
+      return failed("PSync KO", ModuleStartupPropertiesCodePropertiesSyncFailure);
+    }
+
+    if (description != NULL) {
+      log(CLASS_MODULE, Info, "SDesc");
+      getPropSync()->pushDescription(description);
+    } else {
+      log(CLASS_MODULE, Debug, "No SDesc");
     }
 
     time_t leftTime = getBot()->getClock()->currentTime();
 
     Buffer timeAux(19);
-    log(CLASS_MODULE, Info, "# Previous actors' times: %s...", Timing::humanize(leftTime, &timeAux));
+    log(CLASS_MODULE, Info, "<Tims:%s", Timing::humanize(leftTime, &timeAux));
     getBot()->setActorsTime(leftTime);
 
-    log(CLASS_MODULE, Info, "# Syncing clock...");
+    log(CLASS_MODULE, Info, "SClock");
     // sync real date / time on clock, block if a single run is requested
     bool freezeTime = oneRun;
     bool clockSyncd = getClockSync()->syncClock(freezeTime, DEFAULT_CLOCK_SYNC_ATTEMPTS);
-    log(CLASS_MODULE, Info, "# Current time: %s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
-
-    if (description != NULL) {
-      log(CLASS_MODULE, Info, "# Sending description...");
-      getPropSync()->pushDescription(description);
-    } else {
-      log(CLASS_MODULE, Info, "# No description to send...");
-    }
-
+    log(CLASS_MODULE, Info, ">Tims:%s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
     if (!clockSyncd) {
-      return failed("# Clocksinc failed...", ModuleStartupPropertiesCodeClockSyncFailure);
+      return failed("SClock KO", ModuleStartupPropertiesCodeClockSyncFailure);
     }
 
-    log(CLASS_MODULE, Info, "# Startup succeeded");
+    log(CLASS_MODULE, Info, "STUP OK");
 
     pushLogs();
 
