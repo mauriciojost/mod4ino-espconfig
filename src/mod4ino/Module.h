@@ -302,10 +302,6 @@ public:
 public:
   StartupStatus startupProperties() {
 
-    if (getBot()->getMode() != RunMode) {
-      return failed("Skip STUP", ModuleStartupPropertiesCodeSkipped);
-    }
-
     log(CLASS_MODULE, Info, "LGProps/FS");
     getPropSync()->fsLoadActorsProps();
 
