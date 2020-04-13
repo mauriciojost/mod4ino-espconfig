@@ -242,9 +242,9 @@ void test_basic_behaviour() {
            NULL // logs to push
            );
   m->getBot()->setMode(mode);
-  ModuleStartupPropertiesCode s = m->startupProperties();
+  StartupStatus s = m->startupProperties();
 
-  TEST_ASSERT_EQUAL(ModuleStartupPropertiesCodeSuccess, s);          // success
+  TEST_ASSERT_EQUAL(ModuleStartupPropertiesCodeSuccess, s.startupCode);          // success
   TEST_ASSERT_EQUAL(1, (int)m->getBot()->getClock()->currentTime()); // remote clock sync took place
   TEST_ASSERT_EQUAL_STRING("~20s", m->getSettings()->getBatchTiming()->getFreq());             // loaded target value
 

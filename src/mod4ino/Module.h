@@ -22,6 +22,10 @@
 #define PERIOD_CONFIGURE_SEC 1
 #define MAX_BATCH_PERIOD_SECS 172800 // 2 days
 
+#ifndef SLEEP_PERIOD_UPON_BOOT_SECS
+#define SLEEP_PERIOD_UPON_BOOT_SECS 2
+#endif // SLEEP_PERIOD_UPON_BOOT_SECS
+
 #define HELP_COMMAND_CLI                                                                                                                   \
   "\n  MODULE HELP"                                                                                                                        \
   "\n  int             : interrupt current ongoing action"                                                                                 \
@@ -58,6 +62,16 @@ enum ModuleStartupPropertiesCode {
   ModuleStartupPropertiesCodePropertiesSyncFailure,
   ModuleStartupPropertiesCodeClockSyncFailure,
   ModuleStartupPropertiesCodeDelimiter
+};
+
+class StartupStatus {
+public: 
+  ModuleStartupPropertiesCode startupCode;
+  BotMode botMode;
+  StartupStatus(ModuleStartupPropertiesCode s, BotMode m) {
+    startupCode = s;
+    botMode = m;
+  }
 };
 
 /**
@@ -141,7 +155,7 @@ private:
    *   module->getActors()->add(n, (Actor *)actor1, ...);
    *   module->setup(...);
    *   ModuleStartupPropertiesCode s = module->startupProperties(...);
-   *   if (s == ModuleStartupPropertiesCodeSuccess) {
+   *   if (s.startupCode == ModuleStartupPropertiesCodeSuccess) {
    *     while (true) {
    *       module->loop();
    *     }
@@ -260,10 +274,9 @@ public:
   }
 
 private: 
-  ModuleStartupPropertiesCode failed(const char *msg, ModuleStartupPropertiesCode code) {
-     log(CLASS_MODULE, Warn, msg);
-     getBot()->setMode(ConfigureMode); // this guarantees no actor acts
-     return code;
+  StartupStatus failed(const char *msg, ModuleStartupPropertiesCode code) {
+     log(CLASS_MODULE, Error, "SU: %s", msg);
+     return StartupStatus(code, ConfigureMode);
   }
 
 public:
@@ -287,7 +300,7 @@ public:
    *
    */
 public:
-  ModuleStartupPropertiesCode startupProperties() {
+  StartupStatus startupProperties() {
 
     if (getBot()->getMode() != RunMode) {
       return failed("Skip STUP", ModuleStartupPropertiesCodeSkipped);
@@ -341,7 +354,14 @@ public:
 
     pushLogs();
 
-    return ModuleStartupPropertiesCodeSuccess;
+    log(CLASS_MODULE, Debug, "Letting user interrupt...");
+    bool i = sleepInterruptable(now(), SLEEP_PERIOD_UPON_BOOT_SECS);
+    if (i) {
+      return StartupStatus(ModuleStartupPropertiesCodeSuccess, ConfigureMode);
+    } else {
+      return StartupStatus(ModuleStartupPropertiesCodeSuccess, RunMode);
+    }
+
   }
 
   /**
