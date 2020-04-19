@@ -74,6 +74,7 @@ private:
   bool devDebug;
   int miniperiodms;
   int logLevel;
+  bool updateScheduled;
   Buffer *ssid;
   Buffer *pass;
   Buffer *ssidb;
@@ -87,6 +88,7 @@ private:
   Metadata *md;
   Timing *batchTiming;
   void (*update)(const char *targetVersion, const char *currentVersion);
+  PropSync *propSync;
 
 public:
   Settings(const char *n) {
@@ -120,6 +122,7 @@ public:
     devDebug = true;
     miniperiodms = FRAG_TO_SLEEP_MS_MAX;
     logLevel = (int)getLogLevel();
+    updateScheduled = false;
     md = new Metadata(n);
     md->getTiming()->setFreq("~24h");
     batchTiming = new Timing();
@@ -128,6 +131,7 @@ public:
     target = new Buffer(TARGET_BUFFER_SIZE);
     target->load(LATEST_UPDATES_CODE);
     update = NULL;
+    propSync = NULL;
   }
 
   const char *getName() {
@@ -146,26 +150,42 @@ public:
       }
     }
     if (getTiming()->matches()) {
+      updateScheduled = true;
+    }
+    batchTiming->setCurrentTime(getTiming()->getCurrentTime()); // align with time
+  }
+
+  void updateIfMust() {
+    const char *currVersion = STRINGIFY(PROJ_VERSION);
+    if (updateScheduled) {
       if (!target->equals(SKIP_UPDATES_CODE)) {
-        log(CLASS_SETTINGS, Warn, "Have to update '%s'->'%s'", currVersion, target->getBuffer());
+        log(CLASS_SETTINGS, Warn, "Update:'%s'->'%s'", currVersion, target->getBuffer());
         if (update != NULL) {
-          update(target->getBuffer(), currVersion);
+          PropSyncStatusCode st = propSync->pushActors(true); // push properties to the server
+          if (!propSync->isFailure(st)) {
+            update(target->getBuffer(), currVersion); // update
+            updateScheduled = false; // in case update failed, forget the attempt
+          } else {
+            log(CLASS_SETTINGS, Warn, "UPD SKP(%d)", (int)st);
+          }
         } else {
           log(CLASS_SETTINGS, Warn, "No init.");
         }
       }
     }
-    batchTiming->setCurrentTime(getTiming()->getCurrentTime()); // align with time
+    
   }
 
   void setup(
     const char *pr,
     const char *pl,
-    void (*u)(const char *targetVersion, const char *currentVersion)
+    void (*u)(const char *targetVersion, const char *currentVersion),
+    PropSync *ps
   ) {
     update = u;
     setProject(pr);
     setPlatform(pl);
+    propSync = ps;
   }
 
   const char *getPropName(int propIndex) {

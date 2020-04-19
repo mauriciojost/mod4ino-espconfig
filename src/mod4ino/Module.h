@@ -270,7 +270,7 @@ public:
     propSync->setup(bot, initWifi, httpMethod, fileRead, fileWrite);
     clockSync->setup(bot->getClock(), initWifi, httpMethod);
 
-    settings->setup(project, platform, update);
+    settings->setup(project, platform, update, propSync);
   }
 
 private: 
@@ -686,7 +686,7 @@ public:
   }
 
 private:
-  time_t periodToDeepSleep() {
+  time_t durationToDeepSleep() {
     Timing* timing = getSettings()->getBatchTiming();
     time_t toMatch = timing->secsToMatch(MAX_BATCH_PERIOD_SECS);
     time_t fromMatch = timing->secsFromMatch(MAX_BATCH_PERIOD_SECS);
@@ -721,11 +721,13 @@ public:
           log(CLASS_MODULE, Info, "Push(1run)");
           // push properties to the server (with new props and new clock blocked timing)
           getPropSync()->pushActors(true);
-          time_t s = periodToDeepSleep();
+          time_t s = durationToDeepSleep();
           pushLogs();
+          getSettings()->updateIfMust();
           deepSleepNotInterruptable(cycleBegin, s);
         } else {
           pushLogs();
+          getSettings()->updateIfMust();
           sleepInterruptable(cycleBegin, getSettings()->getBatchTiming()->secsToMatch(MAX_BATCH_PERIOD_SECS));
         }
         break;
