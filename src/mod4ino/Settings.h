@@ -1,5 +1,5 @@
-#ifndef GLOBAL_INC
-#define GLOBAL_INC
+#ifndef SETTINGS_MODULE_INC
+#define SETTINGS_MODULE_INC
 
 /**
  * Settings
@@ -13,6 +13,7 @@
 #include <main4ino/Boolean.h>
 #include <main4ino/Integer.h>
 #include <mod4ino/Status.h>
+#include <mod4ino/Module.h>
 
 #define CLASS_SETTINGS "ST"
 
@@ -23,6 +24,8 @@
 #ifndef WIFI_PASSWORD_STEADY
 #define WIFI_PASSWORD_STEADY "???"
 #endif // WIFI_PASSWORD_STEADY
+
+#define CMD_LINE_BUFFER_SIZE 64
 
 #ifndef FRAG_TO_SLEEP_MS_MAX
 #define FRAG_TO_SLEEP_MS_MAX 1000 // maximum sleeping time for which the module can be unresponsive
@@ -61,11 +64,17 @@ enum SettingsProps {
   SettingsUpdateTargetProp, // target version to upgrade the firmware to
   SettingsUpdateFreqProp,   // frequency of upgrade
   SettingsBatchFreqProp,    // frequency of batch runs for all actors
+#ifdef INSECURE
+  SettingsCmdFreqProp,      // frequency of execution of command
+  SettingsCmdLineProp,      // command line to execute
+#endif // INSECURE
   SettingsAliasProp,        // alias name for this device
   SettingsProjectProp,      // project name
   SettingsPlatformProp,     // platform name
   SettingsPropsDelimiter    // amount of properties
 };
+
+class Module;
 
 class Settings : public Actor {
 
@@ -85,10 +94,17 @@ private:
   Buffer *alias;
   Buffer *project;
   Buffer *platform;
+#ifdef INSECURE
+  Buffer *cmdLine;
+  Timing *cmdTiming;
+  Module *mod;
+#endif // INSECURE
   Metadata *md;
   Timing *batchTiming;
   void (*update)(const char *targetVersion, const char *currentVersion);
   PropSync *propSync;
+
+  void command(const char* c);
 
 public:
   Settings(const char *n) {
@@ -129,6 +145,14 @@ public:
     batchTiming = new Timing();
     batchTiming->setFreq("~1m");
 
+#ifdef INSECURE
+    cmdLine = new Buffer(CMD_LINE_BUFFER_SIZE);
+    cmdLine->clear();
+    cmdTiming = new Timing();
+    cmdTiming->setFreq("never");
+    mod = NULL;
+#endif // INSECURE
+
     target = new Buffer(TARGET_BUFFER_SIZE);
     target->load(LATEST_UPDATES_CODE);
     update = NULL;
@@ -145,7 +169,14 @@ public:
       updateScheduled = true;
     }
     batchTiming->setCurrentTime(getTiming()->getCurrentTime()); // align with time
+#ifdef INSECURE
+    cmdTiming->setCurrentTime(getTiming()->getCurrentTime()); // align with time
+    if (cmdTiming->matches()) {
+      command(cmdLine->getBuffer());
+    }
+#endif // INSECURE
   }
+
 
   void updateIfMust() {
     const char *currVersion = STRINGIFY(PROJ_VERSION);
@@ -169,11 +200,15 @@ public:
   }
 
   void setup(
+    Module *m,
     const char *pr,
     const char *pl,
     void (*u)(const char *targetVersion, const char *currentVersion),
     PropSync *ps
   ) {
+#ifdef INSECURE
+    mod = m;
+#endif // INSECURE
     update = u;
     setProject(pr);
     setPlatform(pl);
@@ -206,6 +241,12 @@ public:
         return ADVANCED_PROP_PREFIX "ufreq";
       case (SettingsBatchFreqProp):
         return ADVANCED_PROP_PREFIX "bfreq";
+#ifdef INSECURE
+      case (SettingsCmdFreqProp):
+        return ADVANCED_PROP_PREFIX "cmdfreq";
+      case (SettingsCmdLineProp):
+        return ADVANCED_PROP_PREFIX "cmd";
+#endif // INSECURE
       case (SettingsAliasProp):
         return "alias";
       case (SettingsProjectProp):
@@ -261,6 +302,14 @@ public:
       case (SettingsBatchFreqProp):
         setPropTiming(m, targetValue, actualValue, batchTiming);
         break;
+#ifdef INSECURE
+      case (SettingsCmdFreqProp):
+        setPropTiming(m, targetValue, actualValue, cmdTiming);
+        break;
+      case (SettingsCmdLineProp):
+        setPropValue(m, targetValue, actualValue, cmdLine);
+        break;
+#endif // INSECURE
       case (SettingsAliasProp):
         setPropValue(m, targetValue, actualValue, alias);
         break;
@@ -371,4 +420,4 @@ public:
 
 };
 
-#endif // GLOBAL_INC
+#endif // SETTINGS_MODULE_INC

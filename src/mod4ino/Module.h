@@ -77,6 +77,9 @@ public:
 /**
  * This class represents the integration of all components (LCD, buttons, buzzer, etc).
  */
+
+class Settings;
+
 class Module {
 
 private:
@@ -141,6 +144,21 @@ private:
 
   // Defines how to retrieve the buffer containing the logs to be pushed (if any)
   Buffer* (*getLogBuffer)();
+   
+  // Methods depending on Settings definition (to break cyclic dependency)
+  void initSettings();
+  bool inDebugMode();
+  void setupSettings(const char *project, const char *platform);
+  Timing* getBatchTiming();
+  void updateIfMust();
+  void setSsid(const char* c);
+  const char* getSsid();
+  void setPass(const char* c);
+  const char* getPass();
+  void setSsidBackup(const char* c);
+  const char* getSsidBackup();
+  void setPassBackup(const char* c);
+  const char* getPassBackup();
 
   /**
    * Core of mod4ino
@@ -166,7 +184,7 @@ public:
   Module() {
     actors = new Array<Actor *>;
 
-    settings = new Settings("settings");
+    initSettings();
     propSync = new PropSync("propsync");
     clockSync = new ClockSync("clocksync");
     clock = new Clock("clock");
@@ -202,7 +220,7 @@ private: bool pushLogs() {
     if (getLogBuffer == NULL || getLogBuffer() == NULL) 
       return true;
 
-    if (!settings->getDebug())
+    if (!inDebugMode())
       return true;
 
     int len = getLogBuffer()->getLength();
@@ -270,7 +288,7 @@ public:
     propSync->setup(bot, initWifi, httpMethod, fileRead, fileWrite);
     clockSync->setup(bot->getClock(), initWifi, httpMethod);
 
-    settings->setup(project, platform, update, propSync);
+    setupSettings(project, platform);
   }
 
 private: 
@@ -466,8 +484,8 @@ public:
         logRaw(CLASS_MODULE, User, "Argument needed:\n  wifissid <ssid>");
         return InvalidArgs;
       }
-      settings->setSsid(c);
-      log(CLASS_MODULE, Info, "Wifi ssid: %s", settings->getSsid());
+      setSsid(c);
+      log(CLASS_MODULE, Info, "Wifi ssid: %s", getSsid());
       return Executed;
     } else if (strcmp("wifipass", c) == 0) {
       c = strtok(NULL, " ");
@@ -475,8 +493,8 @@ public:
         logRaw(CLASS_MODULE, User, "Argument needed:\n  wifipass <pass>");
         return InvalidArgs;
       }
-      settings->setPass(c);
-      log(CLASS_MODULE, Info, "Wifi pass: %s", settings->getPass());
+      setPass(c);
+      log(CLASS_MODULE, Info, "Wifi pass: %s", getPass());
       return Executed;
     } else if (strcmp("wifissidb", c) == 0) {
       c = strtok(NULL, " ");
@@ -484,8 +502,8 @@ public:
         logRaw(CLASS_MODULE, User, "Argument needed:\n  wifissidb <ssid>");
         return InvalidArgs;
       }
-      settings->setSsidBackup(c);
-      log(CLASS_MODULE, Info, "Wifi ssidb: %s", settings->getSsidBackup());
+      setSsidBackup(c);
+      log(CLASS_MODULE, Info, "Wifi ssidb: %s", getSsidBackup());
       return Executed;
     } else if (strcmp("wifipassb", c) == 0) {
       c = strtok(NULL, " ");
@@ -493,8 +511,8 @@ public:
         logRaw(CLASS_MODULE, User, "Argument needed:\n  wifipassb <pass>");
         return InvalidArgs;
       }
-      settings->setPassBackup(c);
-      log(CLASS_MODULE, Info, "Wifi passb: %s", settings->getPassBackup());
+      setPassBackup(c);
+      log(CLASS_MODULE, Info, "Wifi passb: %s", getPassBackup());
       return Executed;
     } else if (strcmp("wifi", c) == 0) {
       initWifi();
@@ -687,7 +705,7 @@ public:
 
 private:
   time_t durationToDeepSleep() {
-    Timing* timing = getSettings()->getBatchTiming();
+    Timing* timing = getBatchTiming();
     time_t toMatch = timing->secsToMatch(MAX_BATCH_PERIOD_SECS);
     time_t fromMatch = timing->secsFromMatch(MAX_BATCH_PERIOD_SECS);
     if (toMatch < fromMatch) { // toMatch is closer, it's the good timing, is in the future, i.e. deep sleep completed faster than it should have
@@ -723,12 +741,12 @@ public:
           getPropSync()->pushActors(true);
           time_t s = durationToDeepSleep();
           pushLogs();
-          getSettings()->updateIfMust();
+          updateIfMust();
           deepSleepNotInterruptable(cycleBegin, s);
         } else {
           pushLogs();
-          getSettings()->updateIfMust();
-          sleepInterruptable(cycleBegin, getSettings()->getBatchTiming()->secsToMatch(MAX_BATCH_PERIOD_SECS));
+          updateIfMust();
+          sleepInterruptable(cycleBegin, getBatchTiming()->secsToMatch(MAX_BATCH_PERIOD_SECS));
         }
         break;
       case (ConfigureMode):
