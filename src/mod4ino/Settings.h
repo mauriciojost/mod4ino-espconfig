@@ -118,6 +118,7 @@ public:
     logOpts->load(LOGOPTS_DEFAULT);
 
     version = new Buffer(VERSION_BUFFER_SIZE);
+    version->load(STRINGIFY(PROJ_VERSION));
 
     devDebug = true;
     miniperiodms = FRAG_TO_SLEEP_MS_MAX;
@@ -140,15 +141,6 @@ public:
 
   void act() {
     const char *currVersion = STRINGIFY(PROJ_VERSION);
-    static bool first = true;
-    if (first) {
-      first = false;
-      if (!version->equals(currVersion)) {
-        log(CLASS_SETTINGS, Warn, "Upgraded: '%s'->'%s'", version->getBuffer(), currVersion);
-        version->load(currVersion);
-        getMetadata()->changed();
-      }
-    }
     if (getTiming()->matches()) {
       updateScheduled = true;
     }
@@ -231,7 +223,7 @@ public:
         setPropBoolean(m, targetValue, actualValue, &devDebug);
         break;
       case (SettingsVersionProp):
-        setPropValue(m, targetValue, actualValue, version);
+        setPropValue(m, NULL, actualValue, version); // read only, truth comes from firmware
         break;
       case (SettingsMiniPeriodMsProp):
         setPropInteger(m, targetValue, actualValue, &miniperiodms);
@@ -345,13 +337,6 @@ public:
   void setPassBackup(const char *s) {
     if (!passb->equals(s)) {
       passb->load(s);
-      getMetadata()->changed();
-    }
-  }
-
-  void setVersion(const char *v) {
-    if (!version->equals(v)) {
-      version->load(v);
       getMetadata()->changed();
     }
   }
