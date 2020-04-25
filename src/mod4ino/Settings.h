@@ -164,7 +164,6 @@ public:
   }
 
   void act() {
-    const char *currVersion = STRINGIFY(PROJ_VERSION);
     if (getTiming()->matches()) {
       updateScheduled = true;
     }
