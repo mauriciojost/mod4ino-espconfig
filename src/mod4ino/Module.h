@@ -304,13 +304,25 @@ public:
     description = d;
   }
 
+private:
+  void loadFsProps() {
+
+    log(CLASS_MODULE, Info, "LGProps/FS");
+    getPropSync()->fsLoadActorsProps();
+
+    log(CLASS_MODULE, Info, "LM4INOProps/FS");
+    getPropSync()->setLoginPass(apiDeviceLogin(), apiDevicePass()); // may override credentials loaded in steps above
+    getClockSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
+  }
+
+
   /**
    * Start up all module's properties
    *
    * Retrieve credentials and other properties from FS and server and report actual ones.
    *
-   * 1. Load properties from the file system (general properties/credentials not related to the framework).
-   * 0. Load properties from the file system (credentials related to the framework).
+   * 0. Load properties from the file system (general properties/credentials not related to the framework).
+   * 1. Load properties from the file system (credentials related to the framework).
    * 2. Pull/push properties from/to the server
    * 3. Set time of actors with last known time
    * 4. Find out real current time
@@ -320,12 +332,7 @@ public:
 public:
   StartupStatus startupProperties() {
 
-    log(CLASS_MODULE, Info, "LGProps/FS");
-    getPropSync()->fsLoadActorsProps();
-
-    log(CLASS_MODULE, Info, "LM4INOProps/FS");
-    getPropSync()->setLoginPass(apiDeviceLogin(), apiDevicePass()); // may override credentials loaded in steps above
-    getClockSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
+    loadFsProps();
 
     log(CLASS_MODULE, Info, "SyncM4INO");
     bool oneRun = oneRunModeSafe();
@@ -377,6 +384,32 @@ public:
     }
 
   }
+
+  /**
+   * Start up all module's properties (light, minimum interactions with server)
+   *
+   * Retrieve credentials and other properties from FS and server and report actual ones.
+   *
+   * 0. Load properties from the file system (general properties/credentials not related to the framework).
+   * 1. Load properties from the file system (credentials related to the framework).
+   *
+   */
+public:
+  StartupStatus startupPropertiesLight() {
+
+    loadFsProps();
+    pushLogs();
+
+    log(CLASS_MODULE, Debug, "Letting user interrupt...");
+    bool i = sleepInterruptable(now(), SLEEP_PERIOD_UPON_BOOT_SECS);
+    if (i) {
+      return StartupStatus(ModuleStartupPropertiesCodeSuccess, ConfigureMode);
+    } else {
+      return StartupStatus(ModuleStartupPropertiesCodeSuccess, RunMode);
+    }
+
+  }
+
 
   /**
    * Handle a user command.
