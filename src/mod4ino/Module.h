@@ -762,9 +762,9 @@ public:
     time_t cycleBegin = now();
     switch (getBot()->getMode()) {
       case (RunMode):
-        log(CLASS_MODULE, Info, "#BLOOP(ver: %s)", STRINGIFY(PROJ_VERSION));
+        log(CLASS_MODULE, Info, "#LOOP(%s)", STRINGIFY(PROJ_VERSION));
         runMode();
-        log(CLASS_MODULE, Info, "#ELOOP");
+        log(CLASS_MODULE, Info, "#ENDLOOP");
         if (oneRunModeSafe()) {
           // before finishing store in the server the last status of all actors
           // this includes the timing of the clock, that has progressed
