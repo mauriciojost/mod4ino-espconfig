@@ -85,6 +85,12 @@ int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *
     response->contentBuffer()->load("{\"ids\": [1]}");
     return HTTP_OK;
 
+  } else if (req == HttpGet &&
+             sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/summary?status=C", str1) == 1 &&
+             strcmp(str1, "reports") == 0) {
+      log(CLASS_MAIN, Info, "Broken summary");
+      response->contentBuffer()->load("{");
+    return HTTP_OK;
     // PULL BY ACTOR
   } else if (req == HttpGet &&
              sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) == 3 &&
