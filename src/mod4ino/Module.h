@@ -26,6 +26,10 @@
 #define SLEEP_PERIOD_UPON_BOOT_SECS 2
 #endif // SLEEP_PERIOD_UPON_BOOT_SECS
 
+#ifndef CAT_BUFFER_LENGTH
+#define CAT_BUFFER_LENGTH 512
+#endif // CAT_BUFFER_LENGTH
+
 #define HELP_COMMAND_CLI                                                                                                                   \
   "\n  MODULE HELP"                                                                                                                        \
   "\n  int             : interrupt current ongoing action"                                                                                 \
@@ -584,7 +588,7 @@ public:
         logRaw(CLASS_MODULE, User, "Argument needed:\n  cat <file>");
         return InvalidArgs;
       }
-      Buffer buf(128);
+      Buffer buf(CAT_BUFFER_LENGTH);
       fileRead(f, &buf);
       log(CLASS_MODULE, User, "### File: %s", f);
       logRaw(CLASS_MODULE, User, buf.getBuffer());
