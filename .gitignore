@@ -13,3 +13,5 @@
 /coverage.xml
 /*.gcda
 /*.gcno
+/src/Stream.cpp
+/src/Stream.h

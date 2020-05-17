@@ -11,6 +11,7 @@
 #define CLASS_MAIN "ModuleTest"
 
 const char *replyEmptyBody = "{}";
+ParamStream *response = new ParamStream(1024);
 
 bool wifiConnected;
 int pullCount;
@@ -64,7 +65,7 @@ bool initWifi(const char *ssid, const char *pass, bool skipIfConnected, int retr
   return wifiConnected;
 }
 
-int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *response, Table *headers, const char *fingerprint) {
+HttpResponse httpRequest(HttpMethod req, const char *url, Stream *body, Table *headers, const char *fingerprint) {
   char str1[128];
   char str2[128];
   long l1;
@@ -74,16 +75,21 @@ int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *
       strcmp(str1, "reports") == 0) {
     if (strcmp(str2, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded last '%s'", str1);
-      response->contentBuffer()->load("{\"+bfreq\":\"~10s\"}");
+      response->fill("{\"+bfreq\":\"~10s\"}");
     } else {
-      response->contentBuffer()->load(replyEmptyBody);
+      response->fill(replyEmptyBody);
     }
-    return HTTP_OK;
+    return HttpResponse(HTTP_OK, response);
 
-    // RETRIEVE TARGETS NOT CONSUMED (I.E. CLOSED STATUS)
+  // RETRIEVE LAST SUMMARY REPORT
+  } else if (req == HttpGet && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/summary?status=C", url) == 0) {
+    response->fill("{"); // broken
+    return HttpResponse(HTTP_OK, response);
+
+  // RETRIEVE TARGETS NOT CONSUMED (I.E. CLOSED STATUS)
   } else if (req == HttpGet && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets?status=C&ids=true", url) == 0) {
-    response->contentBuffer()->load("{\"ids\": [1]}");
-    return HTTP_OK;
+    response->fill("{\"ids\": [1]}");
+    return HttpResponse(HTTP_OK, response);
 
   } else if (req == HttpGet &&
              sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/summary?status=C", str1) == 1 &&
@@ -97,46 +103,46 @@ int httpRequest(HttpMethod req, const char *url, const char *body, ParamStream *
              strcmp(str1, "targets") == 0) {
     if (strcmp(str2, "settings") == 0) {
       log(CLASS_MAIN, Info, "Settings loaded target '%s' from %ld", str1, l1);
-      response->contentBuffer()->load("{\"+bfreq\":\"~20s\"}");
+      response->fill("{\"+bfreq\":\"~20s\"}");
     } else {
       log(CLASS_MAIN, Info, "Settings loaded generic");
-      response->contentBuffer()->load(replyEmptyBody);
+      response->fill(replyEmptyBody);
     }
-    return HTTP_OK;
+    return HttpResponse(HTTP_OK, response);
 
     // PUSH BY ACTOR (REPORTS)
   } else if (req == HttpPost &&
              sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) == 3) {
-    return HTTP_CREATED;
+    return HttpResponse(HTTP_CREATED, response->fill(""));
 
     // MARK REPORT AS CLOSED
     // MARK TARGET AS CONSUMED
   } else if (req == HttpUpdate && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld?status=", str1, &l1) == 2) {
-    return HTTP_OK;
+    return HttpResponse(HTTP_OK, response->fill(""));
 
     // PRE-PUSH BY ACTOR (REPORTS)
   } else if (req == HttpPost && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/", str1) == 1) {
     if (strcmp(str1, "reports") == 0) {
-      response->contentBuffer()->load("{\"id\": 1}");
-      return HTTP_CREATED;
+      response->fill("{\"id\": 1}");
+      return HttpResponse(HTTP_CREATED, response->fill(""));
     } else {
-      return HTTP_OK;
+      return HttpResponse(HTTP_OK, response->fill(""));
     }
 
     // RETRIEVE TIME
   } else if (req == HttpGet && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/time?timezone=%s", str1) == 1) {
-    response->contentBuffer()->load("{\"formatted\":\"1970-01-01T00:00:01\"}");
-    return HTTP_OK;
+    response->fill("{\"formatted\":\"1970-01-01T00:00:01\"}");
+    return HttpResponse(HTTP_OK, response);
 
   // LOGIN CALL
   } else if (req == HttpPost && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/session"  , url) == 0) {
-    return HTTP_CREATED;
+    return HttpResponse(HTTP_CREATED, response->fill(""));
 
     // UNKNOWN
   } else {
     log(CLASS_MAIN, Debug, "Unknown request %s->%s ", HTTP_METHOD_STR(req), url);
     TEST_FAIL();
-    return 0;
+    return HttpResponse(HTTP_BAD_REQUEST, response->fill(""));
   }
 }
 

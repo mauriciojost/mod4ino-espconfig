@@ -1,11 +1,13 @@
 #ifndef MODULE_INC
 #define MODULE_INC
 
+#include <Stream.h>
 #include <log4ino/Log.h>
 #include <main4ino/Actor.h>
 #include <main4ino/Array.h>
 #include <main4ino/Clock.h>
 #include <main4ino/HttpMethods.h>
+#include <main4ino/HttpResponse.h>
 #include <main4ino/Authenticable.h>
 #include <main4ino/ClockSync.h>
 #include <main4ino/PropSync.h>
@@ -141,7 +143,7 @@ private:
   const char *(*apiDevicePass)();
 
   // Regular HTTP request.
-  int (*httpMethod)(HttpMethod m, const char *url, const char *body, ParamStream *response, Table *headers, const char *fingerprint);
+  HttpResponse (*httpMethod)(HttpMethod m, const char *url, Stream *body, Table *headers, const char *fingerprint);
 
   // Defines if this module is aimed at a single execution (some devices need this, as deep sleep modes equal full restarts).
   bool (*oneRunMode)();
@@ -252,7 +254,7 @@ public:
              const char *platform,
              bool (*initWifiFunc)(),
              void (*stopWifiFunc)(),
-             int (*httpMethodFunc)(HttpMethod m, const char *url, const char *body, ParamStream *response, Table *headers, const char *fingerprint),
+             HttpResponse (*httpMethodFunc)(HttpMethod m, const char *url, Stream *body, Table *headers, const char *fingerprint),
              void (*clearDeviceFunc)(),
              bool (*fileReadFunc)(const char *fname, Buffer *content),
              bool (*fileWriteFunc)(const char *fname, const char *content),
