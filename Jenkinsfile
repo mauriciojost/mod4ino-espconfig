@@ -1,6 +1,10 @@
 // https://jenkins.io/doc/book/pipeline/jenkinsfile/
 // Scripted pipeline (not declarative)
+// Use the snippet generator for more help: https://jenkins.martinenhome.com/job/botino-arduino/pipeline-syntax/
 pipeline {
+  triggers {
+    pollSCM '* * * * *'
+  }
   options {
     buildDiscarder(logRotator(numToKeepStr: '10'))
   }
