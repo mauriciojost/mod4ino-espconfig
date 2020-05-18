@@ -16,9 +16,13 @@ ParamStream *response = new ParamStream(1024);
 bool wifiConnected;
 int pullCount;
 
+void logLine(const char *msg, const char *clz, LogLevel l, bool newline) {
+}
+
 void setUp(void) {
   wifiConnected = true;
   pullCount = 1;
+  setupLog(logLine);
   setLogLevel(Debug);
 }
 
@@ -54,10 +58,6 @@ const char *apiDevicePass() {
 
 bool oneRunModeOff() {
   return false;
-}
-
-void logLine(const char *str) {
-  log(CLASS_MAIN, Debug, "logLine('%s')", str);
 }
 
 bool initWifi(const char *ssid, const char *pass, bool skipIfConnected, int retries) {
@@ -96,7 +96,7 @@ HttpResponse httpRequest(HttpMethod req, const char *url, Stream *body, Table *h
              strcmp(str1, "reports") == 0) {
       log(CLASS_MAIN, Info, "Broken summary");
       response->contentBuffer()->load("{");
-    return HTTP_OK;
+    return HttpResponse(HTTP_OK, response);
     // PULL BY ACTOR
   } else if (req == HttpGet &&
              sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) == 3 &&
