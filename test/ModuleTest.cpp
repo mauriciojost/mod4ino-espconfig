@@ -121,10 +121,9 @@ HttpResponse httpRequest(HttpMethod req, const char *url, Stream *body, Table *h
     return HttpResponse(HTTP_OK, response->fill(""));
 
     // PRE-PUSH BY ACTOR (REPORTS)
-  } else if (req == HttpPost && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/", str1) == 1) {
+  } else if (req == HttpPost && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]", str1) == 1) {
     if (strcmp(str1, "reports") == 0) {
-      response->fill("{\"id\": 1}");
-      return HttpResponse(HTTP_CREATED, response->fill(""));
+      return HttpResponse(HTTP_CREATED, response->fill("{\"id\": 1}"));
     } else {
       return HttpResponse(HTTP_OK, response->fill(""));
     }
@@ -136,7 +135,7 @@ HttpResponse httpRequest(HttpMethod req, const char *url, Stream *body, Table *h
 
   // LOGIN CALL
   } else if (req == HttpPost && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/session"  , url) == 0) {
-    return HttpResponse(HTTP_CREATED, response->fill(""));
+    return HttpResponse(HTTP_OK, response->fill("an-id-here"));
 
     // UNKNOWN
   } else {
