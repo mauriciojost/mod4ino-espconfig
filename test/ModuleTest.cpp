@@ -12,6 +12,7 @@
 
 const char *replyEmptyBody = "{}";
 ParamStream *response = new ParamStream(1024);
+std::function<void ()> nop = []() {};
 
 bool wifiConnected;
 int pullCount;
@@ -79,24 +80,24 @@ HttpResponse httpRequest(HttpMethod req, const char *url, Stream *body, Table *h
     } else {
       response->fill(replyEmptyBody);
     }
-    return HttpResponse(HTTP_OK, response);
+    return HttpResponse(HTTP_OK, response, nop);
 
   // RETRIEVE LAST SUMMARY REPORT
   } else if (req == HttpGet && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/summary?status=C", url) == 0) {
     response->fill("{"); // broken
-    return HttpResponse(HTTP_OK, response);
+    return HttpResponse(HTTP_OK, response, nop);
 
   // RETRIEVE TARGETS NOT CONSUMED (I.E. CLOSED STATUS)
   } else if (req == HttpGet && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets?status=C&ids=true", url) == 0) {
     response->fill("{\"ids\": [1]}");
-    return HttpResponse(HTTP_OK, response);
+    return HttpResponse(HTTP_OK, response, nop);
 
   } else if (req == HttpGet &&
              sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/summary?status=C", str1) == 1 &&
              strcmp(str1, "reports") == 0) {
       log(CLASS_MAIN, Info, "Broken summary");
       response->contentBuffer()->load("{");
-    return HttpResponse(HTTP_OK, response);
+    return HttpResponse(HTTP_OK, response, nop);
     // PULL BY ACTOR
   } else if (req == HttpGet &&
              sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) == 3 &&
@@ -108,40 +109,40 @@ HttpResponse httpRequest(HttpMethod req, const char *url, Stream *body, Table *h
       log(CLASS_MAIN, Info, "Settings loaded generic");
       response->fill(replyEmptyBody);
     }
-    return HttpResponse(HTTP_OK, response);
+    return HttpResponse(HTTP_OK, response, nop);
 
     // PUSH BY ACTOR (REPORTS)
   } else if (req == HttpPost &&
              sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld/actors/%[a-z]", str1, &l1, str2) == 3) {
-    return HttpResponse(HTTP_CREATED, response->fill(""));
+    return HttpResponse(HTTP_CREATED, response->fill(""), nop);
 
     // MARK REPORT AS CLOSED
     // MARK TARGET AS CONSUMED
   } else if (req == HttpUpdate && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]/%ld?status=", str1, &l1) == 2) {
-    return HttpResponse(HTTP_OK, response->fill(""));
+    return HttpResponse(HTTP_OK, response->fill(""), nop);
 
     // PRE-PUSH BY ACTOR (REPORTS)
   } else if (req == HttpPost && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]", str1) == 1) {
     if (strcmp(str1, "reports") == 0) {
-      return HttpResponse(HTTP_CREATED, response->fill("{\"id\": 1}"));
+      return HttpResponse(HTTP_CREATED, response->fill("{\"id\": 1}"), nop);
     } else {
-      return HttpResponse(HTTP_OK, response->fill(""));
+      return HttpResponse(HTTP_OK, response->fill(""), nop);
     }
 
     // RETRIEVE TIME
   } else if (req == HttpGet && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/time?timezone=%s", str1) == 1) {
     response->fill("{\"formatted\":\"1970-01-01T00:00:01\"}");
-    return HttpResponse(HTTP_OK, response);
+    return HttpResponse(HTTP_OK, response, nop);
 
   // LOGIN CALL
   } else if (req == HttpPost && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/session"  , url) == 0) {
-    return HttpResponse(HTTP_OK, response->fill("an-id-here"));
+    return HttpResponse(HTTP_OK, response->fill("an-id-here"), nop);
 
     // UNKNOWN
   } else {
     log(CLASS_MAIN, Debug, "Unknown request %s->%s ", HTTP_METHOD_STR(req), url);
     TEST_FAIL();
-    return HttpResponse(HTTP_BAD_REQUEST, response->fill(""));
+    return HttpResponse(HTTP_BAD_REQUEST, response->fill(""), nop);
   }
 }
 

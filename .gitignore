@@ -15,3 +15,10 @@
 /*.gcno
 /src/Stream.cpp
 /src/Stream.h
+/src/x86
+/bump_version
+/format_code
+/launch_tests
+/pull_dependencies
+/serial_monitor
+/upload

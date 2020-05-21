@@ -1,16 +1,15 @@
 #ifndef MODULE_INC
 #define MODULE_INC
 
-#include <Stream.h>
 #include <log4ino/Log.h>
 #include <main4ino/Actor.h>
 #include <main4ino/Array.h>
 #include <main4ino/Clock.h>
+#include <main4ino/PropSync.h>
+#include <main4ino/ClockSync.h>
 #include <main4ino/HttpMethods.h>
 #include <main4ino/HttpResponse.h>
 #include <main4ino/Authenticable.h>
-#include <main4ino/ClockSync.h>
-#include <main4ino/PropSync.h>
 #include <main4ino/SerBot.h>
 #include <main4ino/Table.h>
 #include <mod4ino/MsgClearMode.h>
