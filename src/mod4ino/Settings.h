@@ -59,7 +59,6 @@ enum SettingsProps {
   SettingsWifiPassProp,     // wifi pass
   SettingsWifiSsidbProp,    // wifi ssid (backup net)
   SettingsWifiPassbProp,    // wifi pass (backup net)
-  SettingsLogLevelProp,     // level of the log messages (0=Debug=verbose, 3=Error)
   SettingsLogOptionsProp,   // options of the log messages (example: AA0;BB1;??0)
   SettingsUpdateTargetProp, // target version to upgrade the firmware to
   SettingsUpdateFreqProp,   // frequency of upgrade
@@ -82,7 +81,6 @@ private:
   const char *name;
   bool devDebug;
   int miniperiodms;
-  int logLevel;
   bool updateScheduled;
   Buffer *ssid;
   Buffer *pass;
@@ -138,7 +136,6 @@ public:
 
     devDebug = true;
     miniperiodms = FRAG_TO_SLEEP_MS_MAX;
-    logLevel = (int)getLogLevel();
     updateScheduled = false;
     md = new Metadata(n);
     md->getTiming()->setFreq("~24h");
@@ -230,8 +227,6 @@ public:
         return DEBUG_PROP_PREFIX "version";
       case (SettingsMiniPeriodMsProp):
         return ADVANCED_PROP_PREFIX "mperiodms";
-      case (SettingsLogLevelProp):
-        return DEBUG_PROP_PREFIX "logl";
       case (SettingsLogOptionsProp):
         return DEBUG_PROP_PREFIX "logo";
       case (SettingsUpdateTargetProp):
@@ -279,12 +274,6 @@ public:
         break;
       case (SettingsWifiPassbProp):
         setPropValue(m, targetValue, actualValue, passb);
-        break;
-      case (SettingsLogLevelProp):
-        setPropInteger(m, targetValue, actualValue, &logLevel);
-        if (m == SetCustomValue) {
-          setLogLevel((char)logLevel);
-        }
         break;
       case (SettingsLogOptionsProp):
         setPropValue(m, targetValue, actualValue, logOpts);

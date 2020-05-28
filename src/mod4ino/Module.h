@@ -36,6 +36,7 @@
   "\n  int             : interrupt current ongoing action"                                                                                 \
   "\n  mode [run,conf] : get or set the mode"                                                                                              \
   "\n  info            : show info about the device"                                                                                       \
+  "\n  version         : show project version"                                                                                             \
   "\n  test            : test the architecture/hardware"                                                                                   \
   "\n  update ...      : update the firmware with the given target version"                                                                \
   "\n  wifi            : init steady wifi"                                                                                                 \
@@ -43,7 +44,6 @@
   "\n  get             : display actors properties"                                                                                        \
   "\n  get ...         : display actor <actor> properties"                                                                                 \
   "\n  set ...         : set an actor property (example: 'set body msg0 HELLO')"                                                           \
-  "\n  logl [...]      : get / change log level to <x> (0 is more verbose, to 3 least verbose)"                                            \
   "\n  logo [...]      : get / change log options (examples: AA0;BB2;??4; means AA to DEBUG, BB to WARN, rest to USER)"                    \
   "\n  clear           : clear device (filesystem, crashes stacktrace, etc.)"                                                              \
   "\n  actall          : all act"                                                                                                          \
@@ -416,6 +416,16 @@ public:
   }
 
 
+void logDemo() {
+  log(CLASS_MODULE, User, "Visible from now on:");
+  log(CLASS_MODULE, User, "- User");
+  log(CLASS_MODULE, Error, "- Error");
+  log(CLASS_MODULE, Warn, "- Warn");
+  log(CLASS_MODULE, Info, "- Info");
+  log(CLASS_MODULE, Debug, "- Debug");
+}
+
+
   /**
    * Handle a user command.
    * If no command maches, commandArchitecture will be used as fallback.
@@ -471,6 +481,9 @@ public:
     } else if (strcmp("info", c) == 0) {
       infoCmd();
       return Executed;
+    } else if (strcmp("version", c) == 0) {
+      logRaw(CLASS_MODULE, User, STRINGIFY(PROJ_VERSION));
+      return Executed;
     } else if (strcmp("test", c) == 0) {
       test();
       return Executed;
@@ -485,22 +498,6 @@ public:
     } else if (strcmp("clear", c) == 0) {
       clearDevice();
       return Executed;
-    } else if (strcmp("logl", c) == 0) {
-      c = strtok(NULL, " ");
-      if (c == NULL) {
-        char ll = getLogLevel();
-        log(CLASS_MODULE, User, "Log level: %d", ll);
-      } else {
-        int ll = atoi(c);
-        setLogLevel(ll);
-        log(CLASS_MODULE, User, "Log level: %d", ll);
-      }
-      log(CLASS_MODULE, User, "Visible from now on:");
-      log(CLASS_MODULE, Error, "- Error");
-      log(CLASS_MODULE, Warn, "- Warn");
-      log(CLASS_MODULE, Info, "- Info");
-      log(CLASS_MODULE, Debug, "- Debug");
-      return Executed;
     } else if (strcmp("logo", c) == 0) {
       c = strtok(NULL, " ");
       if (c == NULL) {
@@ -510,11 +507,7 @@ public:
         setLogOptions(c);
         log(CLASS_MODULE, User, "Set log options: %s", c);
       }
-      log(CLASS_MODULE, User, "Visible from now on:");
-      log(CLASS_MODULE, Error, "- Error");
-      log(CLASS_MODULE, Warn, "- Warn");
-      log(CLASS_MODULE, Info, "- Info");
-      log(CLASS_MODULE, Debug, "- Debug");
+      logDemo();
       return Executed;
     } else if (strcmp("wifissid", c) == 0) {
       c = strtok(NULL, " ");
