@@ -24,7 +24,7 @@ void setUp(void) {
   wifiConnected = true;
   pullCount = 1;
   setupLog(logLine);
-  setLogLevel(Debug);
+  setLogOptions("??D;");
 }
 
 void tearDown() {}
