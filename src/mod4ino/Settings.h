@@ -36,7 +36,7 @@
 #define VERSION_BUFFER_SIZE 32
 
 #define LOGOPTS_BUFFER_SIZE (4 * 8)
-#define LOGOPTS_DEFAULT "??0;"
+#define LOGOPTS_DEFAULT "??D;"
 #define TARGET_BUFFER_SIZE 32
 #define SKIP_UPDATES_CODE "SKIP"
 #define LATEST_UPDATES_CODE "LATEST"
@@ -50,6 +50,10 @@
 #define PLATFORM_BUFFER_SIZE 16
 #define DEFAULT_PLATFORM "platform"
 
+#ifndef UPDATE_FIRMWARE_ENABLED
+#define UPDATE_FIRMWARE_ENABLED true
+#endif // UPDATE_FIRMWARE_ENABLED
+
 enum SettingsProps {
   SettingsDebugProp = 0,    // boolean, define if the device is in debug mode
   SettingsVersionProp,      // string, defines the current version
@@ -59,7 +63,7 @@ enum SettingsProps {
   SettingsWifiPassProp,     // wifi pass
   SettingsWifiSsidbProp,    // wifi ssid (backup net)
   SettingsWifiPassbProp,    // wifi pass (backup net)
-  SettingsLogOptionsProp,   // options of the log messages (example: AA0;BB1;??0)
+  SettingsLogOptionsProp,   // options of the log messages (example: AAE;BBF;??D)
   SettingsUpdateTargetProp, // target version to upgrade the firmware to
   SettingsUpdateFreqProp,   // frequency of upgrade
   SettingsBatchFreqProp,    // frequency of batch runs for all actors
@@ -177,7 +181,9 @@ public:
   void updateIfMust() {
     const char *currVersion = STRINGIFY(PROJ_VERSION);
     if (updateScheduled) {
-      if (!target->equals(SKIP_UPDATES_CODE)) {
+      if (!UPDATE_FIRMWARE_ENABLED) {
+        log(CLASS_SETTINGS, Warn, "Update disabled");
+      } else if (!target->equals(SKIP_UPDATES_CODE)) {
         log(CLASS_SETTINGS, Warn, "Update:'%s'->'%s'", currVersion, target->getBuffer());
         if (update != NULL) {
           PropSyncStatusCode st = propSync->pushActors(true); // push properties to the server
