@@ -5,7 +5,7 @@
 #include <main4ino/Actor.h>
 #include <main4ino/Array.h>
 #include <main4ino/Clock.h>
-#include <main4ino/PropSync.h>
+#include <main4ino/PropSync2.h>
 #include <main4ino/ClockSync.h>
 #include <main4ino/HttpMethods.h>
 #include <main4ino/HttpResponse.h>
