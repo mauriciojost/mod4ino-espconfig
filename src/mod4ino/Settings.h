@@ -50,10 +50,6 @@
 #define PLATFORM_BUFFER_SIZE 16
 #define DEFAULT_PLATFORM "platform"
 
-#ifndef UPDATE_FIRMWARE_ENABLED
-#define UPDATE_FIRMWARE_ENABLED true
-#endif // UPDATE_FIRMWARE_ENABLED
-
 enum SettingsProps {
   SettingsDebugProp = 0,    // boolean, define if the device is in debug mode
   SettingsVersionProp,      // string, defines the current version
@@ -181,9 +177,7 @@ public:
   void updateIfMust() {
     const char *currVersion = STRINGIFY(PROJ_VERSION);
     if (updateScheduled) {
-      if (!UPDATE_FIRMWARE_ENABLED) {
-        log(CLASS_SETTINGS, Warn, "Update disabled");
-      } else if (!target->equals(SKIP_UPDATES_CODE)) {
+      if (!target->equals(SKIP_UPDATES_CODE)) {
         log(CLASS_SETTINGS, Warn, "Update:'%s'->'%s'", currVersion, target->getBuffer());
         if (update != NULL) {
           PropSyncStatusCode st = propSync->pushActors(true); // push properties to the server
