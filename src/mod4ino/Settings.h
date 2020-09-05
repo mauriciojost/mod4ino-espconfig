@@ -138,6 +138,7 @@ public:
     miniperiodms = FRAG_TO_SLEEP_MS_MAX;
     updateScheduled = false;
     md = new Metadata(n);
+    md->setPersist(true); // persist it in FS when possible
     md->getTiming()->setFreq("~24h");
     batchTiming = new Timing();
     batchTiming->setFreq("~1m");
