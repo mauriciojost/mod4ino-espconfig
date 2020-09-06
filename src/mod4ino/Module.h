@@ -16,7 +16,7 @@
 #include <mod4ino/Settings.h>
 #include <mod4ino/Status.h>
 
-#define CLASS_MODULE "MD"
+#define CLASS_MODULE "MO"
 
 #define COMMAND_MAX_LENGTH 128
 

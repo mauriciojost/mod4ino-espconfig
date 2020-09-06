@@ -15,7 +15,7 @@
 #include <mod4ino/Status.h>
 #include <mod4ino/Module.h>
 
-#define CLASS_SETTINGS "ST"
+#define CLASS_SETTINGS "SE"
 
 #ifndef WIFI_SSID_STEADY
 #define WIFI_SSID_STEADY "???"
