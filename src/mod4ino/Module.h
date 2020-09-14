@@ -763,7 +763,9 @@ public:
         log(CLASS_MODULE, Info, "#LOOP(%s)", STRINGIFY(PROJ_VERSION));
         runMode();
         log(CLASS_MODULE, Info, "#ENDLOOP");
-        if (oneRunModeSafe()) {
+        if (getBot()->getMode() != RunMode) {
+          log(CLASS_MODULE, Debug, "No longer run mode!");
+        } else if (oneRunModeSafe()) {
           // before finishing store in the server the last status of all actors
           // this includes the timing of the clock, that has progressed
           // and will allow the next run to start from where we left off
