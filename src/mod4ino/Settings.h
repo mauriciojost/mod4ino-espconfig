@@ -327,7 +327,7 @@ public:
     return md;
   }
 
-  bool getDebugFlag(char flag, bool default) {
+  bool getDebugFlag(char flag, bool default = false) {
     int f = tolower(flag);
     int F = toupper(flag);
     for (unsigned int i = 0; i < devDebug->getLength(); i++) {
