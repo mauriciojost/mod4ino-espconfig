@@ -34,6 +34,7 @@
 #define CREDENTIAL_BUFFER_SIZE 64
 #define STATUS_BUFFER_SIZE 64
 #define VERSION_BUFFER_SIZE 32
+#define DEV_DEBUG_BUFFER_SIZE 16
 
 #define LOGOPTS_BUFFER_SIZE (4 * 8)
 #define LOGOPTS_DEFAULT "??D;"
@@ -79,7 +80,7 @@ class Settings : public Actor {
 
 private:
   const char *name;
-  bool devDebug;
+  Buffer* devDebug;
   int miniperiodms;
   bool updateScheduled;
   Buffer *ssid;
@@ -134,7 +135,9 @@ public:
     version = new Buffer(VERSION_BUFFER_SIZE);
     version->load(STRINGIFY(PROJ_VERSION));
 
-    devDebug = true;
+    devDebug = new Buffer(DEV_DEBUG_BUFFER_SIZE);
+    devDebug->clear();
+
     miniperiodms = FRAG_TO_SLEEP_MS_MAX;
     updateScheduled = false;
     md = new Metadata(n);
@@ -256,7 +259,7 @@ public:
   void getSetPropValue(int propIndex, GetSetMode m, const Value *targetValue, Value *actualValue) {
     switch (propIndex) {
       case (SettingsDebugProp):
-        setPropBoolean(m, targetValue, actualValue, &devDebug);
+        setPropValue(m, targetValue, actualValue, devDebug);
         break;
       case (SettingsVersionProp):
         setPropValue(m, NULL, actualValue, version); // read only, truth comes from firmware
@@ -303,10 +306,10 @@ public:
         setPropValue(m, targetValue, actualValue, alias);
         break;
       case (SettingsProjectProp):
-        setPropValue(m, targetValue, actualValue, project);
+        setPropValue(m, NULL, actualValue, project); // read only, truth comes from the firmware
         break;
       case (SettingsPlatformProp):
-        setPropValue(m, targetValue, actualValue, platform);
+        setPropValue(m, NULL, actualValue, platform); // read only, truth comes from the firmware
         break;
       default:
         break;
@@ -324,15 +327,22 @@ public:
     return md;
   }
 
-  bool getDebug() {
-    return devDebug;
+  bool getDebugFlag(char flag, bool default) {
+    int f = tolower(flag);
+    int F = toupper(flag);
+    for (unsigned int i = 0; i < devDebug->getLength(); i++) {
+      int v = (int)(devDebug->getUnsafeBuffer()[i]);
+      if (v == F) {
+        return true;
+      } else if (v == f) {
+        return false;
+      }
+    }
+    return default;
   }
 
-  void setDebug(bool b) {
-    if (b != devDebug) {
-      devDebug = b;
-      getMetadata()->changed();
-    }
+  bool getDebug() {
+    getDebugFlag('D', true);
   }
 
   const char *getSsid() {
