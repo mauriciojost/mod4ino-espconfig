@@ -342,7 +342,7 @@ public:
   }
 
   bool getDebug() {
-    getDebugFlag('D', true);
+    return getDebugFlag('D', true);
   }
 
   const char *getSsid() {
