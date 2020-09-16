@@ -31,6 +31,10 @@
 #define CAT_BUFFER_LENGTH 512
 #endif // CAT_BUFFER_LENGTH
 
+#ifndef ERR_BUFFER_LENGTH
+#define ERR_BUFFER_LENGTH 64
+#endif // ERR_BUFFER_LENGTH
+
 #define HELP_COMMAND_CLI                                                                                                                   \
   "\n  MODULE HELP"                                                                                                                        \
   "\n  int             : interrupt current ongoing action"                                                                                 \
@@ -73,9 +77,11 @@ class StartupStatus {
 public: 
   ModuleStartupPropertiesCode startupCode;
   BotMode botMode;
-  StartupStatus(ModuleStartupPropertiesCode s, BotMode m) {
+  Buffer msg;
+  StartupStatus(ModuleStartupPropertiesCode s, BotMode m, Buffer u) {
     startupCode = s;
     botMode = m;
+    msg = u;
   }
 };
 
@@ -297,9 +303,9 @@ public:
   }
 
 private: 
-  StartupStatus failed(const char *msg, ModuleStartupPropertiesCode code) {
-     log(CLASS_MODULE, Error, "SU: %s", msg);
-     return StartupStatus(code, ConfigureMode);
+  StartupStatus failed(Buffer msg, ModuleStartupPropertiesCode code) {
+     log(CLASS_MODULE, Error, "SU: %s", msg.getBuffer());
+     return StartupStatus(code, ConfigureMode, msg);
   }
 
 public:
@@ -351,7 +357,9 @@ public:
     }
 
     if (getPropSync()->isFailure(serSyncd)) {
-      return failed("PSync KO", ModuleStartupPropertiesCodePropertiesSyncFailure);
+      Buffer b(ERR_BUFFER_LENGTH);
+      b.fill("PSync KO(%d)", serSyncd);
+      return failed(b, ModuleStartupPropertiesCodePropertiesSyncFailure);
     }
 
     if (description != NULL) {
@@ -373,7 +381,9 @@ public:
     bool clockSyncd = getClockSync()->syncClock(freezeTime, DEFAULT_CLOCK_SYNC_ATTEMPTS);
     log(CLASS_MODULE, Info, ">Tims:%s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
     if (!clockSyncd) {
-      return failed("SClock KO", ModuleStartupPropertiesCodeClockSyncFailure);
+      Buffer b(ERR_BUFFER_LENGTH);
+      b.fill("SClock KO(%d)", clockSyncd);
+      return failed(b, ModuleStartupPropertiesCodeClockSyncFailure);
     }
 
     log(CLASS_MODULE, Info, "STUP OK");
@@ -383,9 +393,11 @@ public:
     log(CLASS_MODULE, Debug, "Letting user interrupt...");
     bool i = sleepInterruptable(now(), SLEEP_PERIOD_UPON_BOOT_SECS);
     if (i) {
-      return StartupStatus(ModuleStartupPropertiesCodeSuccess, ConfigureMode);
+      Buffer b("Interrupted");
+      return StartupStatus(ModuleStartupPropertiesCodeSuccess, ConfigureMode, b);
     } else {
-      return StartupStatus(ModuleStartupPropertiesCodeSuccess, RunMode);
+      Buffer b("OK");
+      return StartupStatus(ModuleStartupPropertiesCodeSuccess, RunMode, b);
     }
 
   }
@@ -408,9 +420,11 @@ public:
     log(CLASS_MODULE, Debug, "Letting user interrupt...");
     bool i = sleepInterruptable(now(), SLEEP_PERIOD_UPON_BOOT_SECS);
     if (i) {
-      return StartupStatus(ModuleStartupPropertiesCodeSuccess, ConfigureMode);
+      Buffer b("Interrupted");
+      return StartupStatus(ModuleStartupPropertiesCodeSuccess, ConfigureMode, b);
     } else {
-      return StartupStatus(ModuleStartupPropertiesCodeSuccess, RunMode);
+      Buffer b("OK");
+      return StartupStatus(ModuleStartupPropertiesCodeSuccess, RunMode, b);
     }
 
   }
