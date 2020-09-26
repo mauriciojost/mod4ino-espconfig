@@ -226,7 +226,7 @@ public:
     description = NULL;
   }
 
-private: bool pushLogs() {
+public: bool pushLogs() {
 
     if (getLogBuffer == NULL || getLogBuffer() == NULL) 
       return true;
