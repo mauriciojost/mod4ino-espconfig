@@ -777,6 +777,7 @@ public:
         log(CLASS_MODULE, Info, "#LOOP(%s)", STRINGIFY(PROJ_VERSION));
         runMode();
         log(CLASS_MODULE, Info, "#ENDLOOP");
+        pushLogs();
         if (getBot()->getMode() != RunMode) {
           log(CLASS_MODULE, Debug, "No longer run mode!");
         } else if (oneRunModeSafe()) {
