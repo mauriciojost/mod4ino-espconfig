@@ -358,7 +358,7 @@ public:
 
     if (getPropSync()->isFailure(serSyncd)) {
       Buffer b(ERR_BUFFER_LENGTH);
-      b.fill("PSync KO(%d)", serSyncd);
+      b.fill("PSync KO(%d:%s)", serSyncd, getPropSync()->statusDescription(serSyncd));
       return failed(b, ModuleStartupPropertiesCodePropertiesSyncFailure);
     }
 
