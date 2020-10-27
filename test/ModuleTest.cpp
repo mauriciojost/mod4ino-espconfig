@@ -139,14 +139,16 @@ bool readFile(const char *f, Buffer *content) {
 bool writeFile(const char *fname, const char *content) {
   bool success = false;
   FILE *file = fopen(fname, "w+");
-  int results = fputs(content, file);
-  if (results == EOF) {
-    log(CLASS_MAIN, Warn, "Failed to write %s ", fname);
-    success = false;
-  } else {
-    success = true;
+  if (file) {
+    int results = fputs(content, file);
+    if (results == EOF) {
+      log(CLASS_MAIN, Warn, "Failed to write %s ", fname);
+      success = false;
+    } else {
+      success = true;
+    }
+    fclose(file);
   }
-  fclose(file);
   return success;
 }
 
