@@ -143,13 +143,13 @@ public:
     md = new Metadata(n);
     md->setPersist(true); // persist it in FS when possible
     md->getTiming()->setFreq("~24h");
-    batchTiming = new Timing();
+    batchTiming = new Timing("stn-btch");
     batchTiming->setFreq("~1m");
 
 #ifdef INSECURE
     cmdLine = new Buffer(CMD_LINE_BUFFER_SIZE);
     cmdLine->clear();
-    cmdTiming = new Timing();
+    cmdTiming = new Timing("stn-cmd");
     cmdTiming->setFreq("never");
     mod = NULL;
 #endif // INSECURE
