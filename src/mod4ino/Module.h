@@ -235,13 +235,13 @@ public: bool pushLogs() {
       return true;
 
     int len = getLogBuffer()->getLength();
-    log(CLASS_MODULE, Debug, "PLogs(%d)...", len);
+    log(CLASS_MODULE, Fine, "PLogs(%d)...", len);
     PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
     if (getPropSync()->isFailure(status)) {
       log(CLASS_MODULE, Warn, "PLogs KO");
       return false;
     } else {
-      log(CLASS_MODULE, Debug, "PLogs OK");
+      log(CLASS_MODULE, Fine, "PLogs OK");
       getLogBuffer()->clear();
       return true;
     }
@@ -366,7 +366,7 @@ public:
       log(CLASS_MODULE, Info, "SDesc");
       getPropSync()->pushDescription(description);
     } else {
-      log(CLASS_MODULE, Debug, "No SDesc");
+      log(CLASS_MODULE, Fine, "No SDesc");
     }
 
     time_t leftTime = getBot()->getClock()->currentTime();
@@ -754,17 +754,17 @@ private:
     time_t toMatch = timing->secsToMatch(MAX_BATCH_PERIOD_SECS);
     time_t fromMatch = timing->secsFromMatch(MAX_BATCH_PERIOD_SECS);
     if (toMatch < fromMatch) { // toMatch is closer, it's the good timing, is in the future, i.e. deep sleep completed faster than it should have
-      log(CLASS_MODULE, Debug, "DS (|<---%lu   ^%lu->|)", (unsigned long)fromMatch, (unsigned long)toMatch);
+      log(CLASS_MODULE, Fine, "DS (|<---%lu   ^%lu->|)", (unsigned long)fromMatch, (unsigned long)toMatch);
       Timing tAlmost("almost");
       tAlmost.setCurrentTime(timing->getCurrentTime() + toMatch + 1);
       tAlmost.setFreq(timing->getFreq());
       time_t toMatchAfter = tAlmost.secsToMatch(MAX_BATCH_PERIOD_SECS);
       time_t yield = toMatch + toMatchAfter;
-      log(CLASS_MODULE, Debug, "uC faster, DS: (%lu+)%lu", (unsigned long)toMatch, (unsigned long)toMatchAfter);
+      log(CLASS_MODULE, Fine, "uC faster, DS: (%lu+)%lu", (unsigned long)toMatch, (unsigned long)toMatchAfter);
       return yield;
     } else { // our timing is in the past, uC was slower and passed the good timing
-      log(CLASS_MODULE, Debug, "DS (|<-%lu^   %lu--->|)", (unsigned long)fromMatch, (unsigned long)toMatch);
-      log(CLASS_MODULE, Debug, "uC slower, DS: %lu", (unsigned long)toMatch);
+      log(CLASS_MODULE, Fine, "DS (|<-%lu^   %lu--->|)", (unsigned long)fromMatch, (unsigned long)toMatch);
+      log(CLASS_MODULE, Fine, "uC slower, DS: %lu", (unsigned long)toMatch);
       return toMatch;
     }
   }
