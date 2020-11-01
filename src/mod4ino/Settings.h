@@ -164,7 +164,7 @@ public:
     return name;
   }
 
-  void act() {
+  Act act(Metadata* md) {
     if (getTiming()->matches()) {
       updateScheduled = true;
     }
@@ -172,9 +172,10 @@ public:
 #ifdef INSECURE
     cmdTiming->setCurrentTime(getTiming()->getCurrentTime()); // align with time
     if (cmdTiming->matches()) {
-      command(cmdLine->getBuffer());
+      return Act(cmdLine->getBuffer());
     }
 #endif // INSECURE
+    return Act("");
   }
 
 
