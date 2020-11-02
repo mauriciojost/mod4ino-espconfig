@@ -14,11 +14,9 @@
 #include <main4ino/Table.h>
 #include <mod4ino/MsgClearMode.h>
 #include <mod4ino/Settings.h>
-#include <mod4ino/Status.h>
+#include <main4ino/CmdExecStatus.h>
 
 #define CLASS_MODULE "MO"
-
-#define COMMAND_MAX_LENGTH 128
 
 #define PERIOD_CONFIGURE_SEC 1
 #define MAX_BATCH_PERIOD_SECS 172800 // 2 days

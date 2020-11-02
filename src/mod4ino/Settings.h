@@ -12,7 +12,7 @@
 #include <main4ino/Actor.h>
 #include <main4ino/Boolean.h>
 #include <main4ino/Integer.h>
-#include <mod4ino/Status.h>
+#include <main4ino/CmdExecStatus.h>
 #include <mod4ino/Module.h>
 
 #define CLASS_SETTINGS "SE"
@@ -103,7 +103,7 @@ private:
   void (*update)(const char *targetVersion, const char *currentVersion);
   PropSync *propSync;
 
-  void command(const char* c);
+  void commandObs(const char* c); // deprecated
 
 public:
   Settings(const char *n) {
@@ -162,6 +162,10 @@ public:
 
   const char *getName() {
     return name;
+  }
+
+  CmdExecStatus command(const char *) {
+    return NotFound;
   }
 
   Act act(Metadata* md) {
