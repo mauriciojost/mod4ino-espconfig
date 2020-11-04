@@ -183,8 +183,8 @@ void runModeArchitecture() {
   log(CLASS_MAIN, Debug, "runModeArchitecture()");
 }
 
-CmdExecStatus commandArchitecture(const char *command) {
-  log(CLASS_MAIN, Debug, "commandArchitecture('%s')", command);
+CmdExecStatus commandArchitecture(Cmd *command) {
+  log(CLASS_MAIN, Debug, "commandArchitecture('%s')", command->b()->getBuffer()->getBuffer());
   return NotFound;
 }
 
