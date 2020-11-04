@@ -15,6 +15,7 @@
 #include <mod4ino/MsgClearMode.h>
 #include <mod4ino/Settings.h>
 #include <main4ino/CmdExecStatus.h>
+#include <main4ino/Cmd.h>
 
 #define CLASS_MODULE "MO"
 
@@ -122,7 +123,7 @@ private:
   void (*preCycleRunMode)();
 
   // Function that executes a command from the underlying architecture point of view.
-  CmdExecStatus (*commandArchitecture)(const char *cmd);
+  CmdExecStatus (*commandArchitecture)(Cmd *cmd);
 
   // File read function.
   bool (*fileRead)(const char *fname, Buffer *content);
@@ -168,6 +169,9 @@ private:
   const char* getSsidBackup();
   void setPassBackup(const char* c);
   const char* getPassBackup();
+
+  std::function<CmdExecStatus (Cmd*)> commandProjectFuncStd = [&](Cmd* cmd) {return commandProject(cmd);};
+  std::function<CmdExecStatus (Cmd*)> commandPlatformFuncStd = [&](Cmd* cmd) {return commandArchitecture(cmd);};
 
   /**
    * Core of mod4ino
@@ -265,7 +269,7 @@ public:
              void (*deepSleepNotInterruptableFunc)(time_t cycleBegin, time_t periodSec),
              void (*cycleConfigureModeFunc)(),
              void (*preCycleRunModeFunc)(),
-             CmdExecStatus (*commandArchitectureFunc)(const char *cmd),
+             CmdExecStatus (*commandArchitectureFunc)(Cmd *cmd),
              void (*infoFunc)(),
              void (*updateFunc)(const char *targetVersion, const char *currentVersion),
              void (*testFunc)(),
@@ -296,6 +300,9 @@ public:
 
     propSync->setup(bot, initWifi, httpMethod, fileRead, fileWrite);
     clockSync->setup(bot->getClock(), initWifi, httpMethod);
+
+    bot->setProjectCommand(commandProjectFuncStd);
+    bot->setPlatformCommand(commandPlatformFuncStd);
 
     setupSettings(project, platform);
   }
@@ -438,14 +445,15 @@ void logDemo() {
 }
 
 
-  /**
-   * Handle a user command.
-   * If no command maches, commandArchitecture will be used as fallback.
-   */
 public:
-  CmdExecStatus command(const char *cmd) {
+  CmdExecStatus command(Cmd *cmd) {
+    return bot->command(cmd);
+  }
 
-    Buffer b(cmd);
+private:
+  CmdExecStatus commandProject(Cmd *cmd) {
+
+    Buffer b(cmd->b()->getBuffer()->getBuffer());
     log(CLASS_MODULE, Info, "\n> %s\n", b.getBuffer());
 
     if (b.getLength() == 0) {
@@ -605,11 +613,14 @@ public:
       propSync->fsLoadActorsProps(); // load mainly credentials already set
       log(CLASS_MODULE, Info, "Properties loaded from local copy");
       return Executed;
-    } else if (strcmp("help", c) == 0 || strcmp("?", c) == 0) {
-      logRaw(CLASS_MODULE, User, HELP_COMMAND_CLI);
-      return commandArchitecture("?");
+    //} else if (strcmp("help", c) == 0 || strcmp("?", c) == 0) {
+    //  logRaw(CLASS_MODULE, User, HELP_COMMAND_CLI);
+    //  return commandArchitecture("?");
+    //} else {
+    //  return commandArchitecture(c);
+    //}
     } else {
-      return commandArchitecture(c);
+      return NotFound;
     }
   }
 

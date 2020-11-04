@@ -12,6 +12,7 @@
 #include <main4ino/Actor.h>
 #include <main4ino/Boolean.h>
 #include <main4ino/Integer.h>
+#include <main4ino/Cmd.h>
 #include <main4ino/CmdExecStatus.h>
 #include <mod4ino/Module.h>
 
@@ -103,8 +104,6 @@ private:
   void (*update)(const char *targetVersion, const char *currentVersion);
   PropSync *propSync;
 
-  void commandObs(const char* c); // deprecated
-
 public:
   Settings(const char *n) {
     name = n;
@@ -164,7 +163,7 @@ public:
     return name;
   }
 
-  CmdExecStatus command(const char *) {
+  CmdExecStatus command(Cmd *) {
     return NotFound;
   }
 
