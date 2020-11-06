@@ -125,6 +125,9 @@ private:
   // Function that executes a command from the underlying architecture point of view.
   CmdExecStatus (*commandArchitecture)(Cmd *cmd);
 
+  // Function that executes a command from the project using this module
+  CmdExecStatus (*commandProjectExtended)(Cmd *cmd);
+
   // File read function.
   bool (*fileRead)(const char *fname, Buffer *content);
 
@@ -170,8 +173,8 @@ private:
   void setPassBackup(const char* c);
   const char* getPassBackup();
 
-  std::function<CmdExecStatus (Cmd*)> commandProjectFuncStd = [&](Cmd* cmd) {return commandProject(cmd);};
   std::function<CmdExecStatus (Cmd*)> commandPlatformFuncStd = [&](Cmd* cmd) {return commandArchitecture(cmd);};
+  std::function<CmdExecStatus (Cmd*)> commandProjectFuncStd = [&](Cmd* cmd) {return commandProject(cmd);};
 
   /**
    * Core of mod4ino
@@ -215,6 +218,7 @@ public:
     cycleConfigureMode = NULL;
     preCycleRunMode = NULL;
     commandArchitecture = NULL;
+    commandProjectExtended = NULL;
     fileRead = NULL;
     fileWrite = NULL;
     info = NULL;
@@ -237,7 +241,7 @@ public: bool pushLogs() {
       return true;
 
     sizet len = getLogBuffer()->getLength();
-    log(CLASS_MODULE, Info, "PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getCapacity());
+    log(CLASS_MODULE, Info, "PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getEffCapacity());
     PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
     if (getPropSync()->isFailure(status)) {
       log(CLASS_MODULE, Warn, "PLogs KO");
@@ -270,6 +274,7 @@ public:
              void (*cycleConfigureModeFunc)(),
              void (*preCycleRunModeFunc)(),
              CmdExecStatus (*commandArchitectureFunc)(Cmd *cmd),
+             CmdExecStatus (*commandProjectExtendedFunc)(Cmd *cmd),
              void (*infoFunc)(),
              void (*updateFunc)(const char *targetVersion, const char *currentVersion),
              void (*testFunc)(),
@@ -287,6 +292,7 @@ public:
     cycleConfigureMode = cycleConfigureModeFunc;
     preCycleRunMode = preCycleRunModeFunc;
     commandArchitecture = commandArchitectureFunc;
+    commandProjectExtended = commandProjectExtendedFunc;
     fileRead = fileReadFunc;
     fileWrite = fileWriteFunc;
     info = infoFunc;
@@ -646,7 +652,7 @@ private:
         logRaw(CLASS_MODULE, User, HELP_COMMAND_CLI);
         return NotFound;
       default:
-        return NotFound;
+        return (commandProjectExtended == NULL? NotFound: commandProjectExtended(c));
     }
   }
 
@@ -828,7 +834,7 @@ public:
           updateIfMust();
           deepSleepNotInterruptable(cycleBegin, s);
         } else {
-          time_t s = getBatchTiming()->secsToMatch(MAX_BATCH_PERIOD_SECS)
+          time_t s = getBatchTiming()->secsToMatch(MAX_BATCH_PERIOD_SECS);
           log(CLASS_MODULE, Fine, "LS:%lu", (unsigned long)s);
           pushLogs();
           updateIfMust();
