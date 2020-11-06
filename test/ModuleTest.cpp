@@ -184,7 +184,7 @@ void runModeArchitecture() {
 }
 
 CmdExecStatus commandArchitecture(Cmd *command) {
-  log(CLASS_MAIN, Debug, "commandArchitecture('%s')", command->getOperation());
+  log(CLASS_MAIN, Debug, "commandArchitecture('%s')", command->getOp());
   return NotFound;
 }
 
