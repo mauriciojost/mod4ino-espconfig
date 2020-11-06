@@ -236,8 +236,8 @@ public: bool pushLogs() {
     if (!inDebugMode())
       return true;
 
-    int len = getLogBuffer()->getLength();
-    log(CLASS_MODULE, Info, "PLog(%d)...", len);
+    sizet len = getLogBuffer()->getLength();
+    log(CLASS_MODULE, Info, "PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getCapacity());
     PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
     if (getPropSync()->isFailure(status)) {
       log(CLASS_MODULE, Warn, "PLogs KO");
@@ -823,13 +823,16 @@ public:
           // push properties to the server (with new props and new clock blocked timing)
           getPropSync()->pushActors(true);
           time_t s = durationToDeepSleep();
+          log(CLASS_MODULE, Info, "DS:%lu", (unsigned long)s);
           pushLogs();
           updateIfMust();
           deepSleepNotInterruptable(cycleBegin, s);
         } else {
+          time_t s = getBatchTiming()->secsToMatch(MAX_BATCH_PERIOD_SECS)
+          log(CLASS_MODULE, Fine, "LS:%lu", (unsigned long)s);
           pushLogs();
           updateIfMust();
-          sleepInterruptable(cycleBegin, getBatchTiming()->secsToMatch(MAX_BATCH_PERIOD_SECS));
+          sleepInterruptable(cycleBegin, s);
         }
         break;
       case (ConfigureMode):
