@@ -139,16 +139,16 @@ public:
 
     miniperiodms = FRAG_TO_SLEEP_MS_MAX;
     updateScheduled = false;
-    md = new Metadata(n);
+    md = new Metadata(n, CLASS_SETTINGS);
     md->setPersist(true); // persist it in FS when possible
     md->getTiming()->setFreq("~24h");
-    batchTiming = new Timing("stn-btch");
+    batchTiming = new Timing("btch", CLASS_SETTINGS);
     batchTiming->setFreq("~1m");
 
 #ifdef INSECURE
     cmdLine = new Buffer(CMD_LINE_BUFFER_SIZE);
     cmdLine->clear();
-    cmdTiming = new Timing("stn-cmd");
+    cmdTiming = new Timing("cmd", CLASS_SETTINGS);
     cmdTiming->setFreq("never");
     mod = NULL;
 #endif // INSECURE

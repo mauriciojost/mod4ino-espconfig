@@ -790,7 +790,7 @@ private:
     time_t fromMatch = timing->secsFromMatch(MAX_BATCH_PERIOD_SECS);
     if (toMatch < fromMatch) { // toMatch is closer, it's the good timing, is in the future, i.e. deep sleep completed faster than it should have
       log(CLASS_MODULE, Fine, "DS (|<---%lu   ^%lu->|)", (unsigned long)fromMatch, (unsigned long)toMatch);
-      Timing tAlmost("almost");
+      Timing tAlmost("almost", CLASS_MODULE);
       tAlmost.setCurrentTime(timing->getCurrentTime() + toMatch + 1);
       tAlmost.setFreq(timing->getFreq());
       time_t toMatchAfter = tAlmost.secsToMatch(MAX_BATCH_PERIOD_SECS);
