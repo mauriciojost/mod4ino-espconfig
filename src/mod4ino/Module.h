@@ -36,29 +36,29 @@
 
 #define HELP_COMMAND_CLI                                                                                                                   \
   "\n  MODULE HELP"                                                                                                                        \
-  "\n  int             : interrupt current ongoing action"                                                                                 \
+  "\n  inte            : interrupt current ongoing action"                                                                                 \
   "\n  mode [run,conf] : get or set the mode"                                                                                              \
   "\n  info            : show info about the device"                                                                                       \
-  "\n  version         : show project version"                                                                                             \
+  "\n  vers            : show project version"                                                                                             \
   "\n  test            : test the architecture/hardware"                                                                                   \
-  "\n  update ...      : update the firmware with the given target version"                                                                \
+  "\n  upda  ...       : update the firmware with the given target version"                                                                \
   "\n  wifi            : init steady wifi"                                                                                                 \
-  "\n  wifistop        : stop steady wifi"                                                                                                 \
-  "\n  get             : display actors properties"                                                                                        \
-  "\n  get ...         : display actor <actor> properties"                                                                                 \
-  "\n  set ...         : set an actor property (example: 'set body msg0 HELLO')"                                                           \
-  "\n  logo [...]      : get / change log options (examples: AA0;BB2;??4; means AA to DEBUG, BB to WARN, rest to USER)"                    \
-  "\n  clear           : clear device (filesystem, crashes stacktrace, etc.)"                                                              \
-  "\n  actall          : all act"                                                                                                          \
-  "\n  touchall        : mark actors as 'changed' to force synchronization with the server"                                                \
-  "\n  actone ...      : make actor <x> act"                                                                                               \
-  "\n  wifissid ...    : set wifi ssid"                                                                                                    \
-  "\n  wifipass ...    : set wifi pass"                                                                                                    \
-  "\n  wifissidb ...   : set wifi ssid (backup net)"                                                                                       \
-  "\n  wifipassb ...   : set wifi pass (backup net)"                                                                                       \
-  "\n  cat ...         : show content of a file (only if in insecure mode)"                                                                \
+  "\n  wist            : stop steady wifi"                                                                                                 \
+  "\n  get  ...        : display actor <actor> properties"                                                                                 \
+  "\n  set  ...        : set an actor property (example: 'set body msg0 HELLO')"                                                           \
+  "\n  slog ...        : change log options (examples: cxF;cyW;??E; means cx class to FINE, cy to WARN, rest to ERROR)"                    \
+  "\n  glog            : get log options
+  "\n  clea            : clear device (filesystem, crashes stacktrace, etc.)"                                                              \
+  "\n  acta            : all act"                                                                                                          \
+  "\n  tall            : mark actors as 'changed' to force synchronization with the server"                                                \
+  "\n  acto ...        : make actor <x> act"                                                                                               \
+  "\n  wis1 ...        : set wifi ssid"                                                                                                    \
+  "\n  wip1 ...        : set wifi pass"                                                                                                    \
+  "\n  wis2 ...        : set wifi ssid (backup net)"                                                                                       \
+  "\n  wip2 ...        : set wifi pass (backup net)"                                                                                       \
+  "\n  cat  ...        : show content of a file (only if in insecure mode)"                                                                \
   "\n  load            : load properties in persistent fs (mainly for credentials)"                                                        \
-  "\n  store           : save properties in persistent fs (mainly for credentials)"                                                        \
+  "\n  stor            : save properties in persistent fs (mainly for credentials)"                                                        \
   "\n  save ...        : save a file <f> with content <y> in persistent fs (mainly for tuning) "                                           \
   "\n  help            : show this help"                                                                                                   \
   "\n  (all messages are shown as info log level)"                                                                                         \
