@@ -644,6 +644,7 @@ private:
       case Cmd::getCmdCode("help"):
       case Cmd::getCmdCode("?"):
         logRaw(CLASS_MODULE, User, HELP_COMMAND_CLI);
+        return NotFound;
       default:
         return NotFound;
     }
