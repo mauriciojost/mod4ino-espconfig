@@ -47,7 +47,7 @@
   "\n  get  ...        : display actor <actor> properties"                                                                                 \
   "\n  set  ...        : set an actor property (example: 'set body msg0 HELLO')"                                                           \
   "\n  slog ...        : change log options (examples: cxF;cyW;??E; means cx class to FINE, cy to WARN, rest to ERROR)"                    \
-  "\n  glog            : get log options
+  "\n  glog            : get log options"                                                                                                  \
   "\n  clea            : clear device (filesystem, crashes stacktrace, etc.)"                                                              \
   "\n  acta            : all act"                                                                                                          \
   "\n  tall            : mark actors as 'changed' to force synchronization with the server"                                                \
