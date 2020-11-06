@@ -237,7 +237,7 @@ public: bool pushLogs() {
       return true;
 
     int len = getLogBuffer()->getLength();
-    log(CLASS_MODULE, Fine, "PLogs(%d)...", len);
+    log(CLASS_MODULE, Info, "PLog(%d)...", len);
     PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
     if (getPropSync()->isFailure(status)) {
       log(CLASS_MODULE, Warn, "PLogs KO");
