@@ -126,7 +126,7 @@ private:
   CmdExecStatus (*commandArchitecture)(Cmd *cmd);
 
   // Function that executes a command from the project using this module
-  CmdExecStatus (*commandProjectExtended)(Cmd *cmd);
+  std::function<CmdExecStatus (Cmd* cmd)> commandProjectExtended;
 
   // File read function.
   bool (*fileRead)(const char *fname, Buffer *content);
@@ -274,7 +274,7 @@ public:
              void (*cycleConfigureModeFunc)(),
              void (*preCycleRunModeFunc)(),
              CmdExecStatus (*commandArchitectureFunc)(Cmd *cmd),
-             CmdExecStatus (*commandProjectExtendedFunc)(Cmd *cmd),
+             std::function<CmdExecStatus (Cmd* cmd)> commandProjectExtendedFunc,
              void (*infoFunc)(),
              void (*updateFunc)(const char *targetVersion, const char *currentVersion),
              void (*testFunc)(),

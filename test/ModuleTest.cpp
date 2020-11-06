@@ -188,11 +188,6 @@ CmdExecStatus commandArchitecture(Cmd *command) {
   return NotFound;
 }
 
-CmdExecStatus commandProjExtended(Cmd *command) {
-  log(CLASS_MAIN, Debug, "commandProjExtended('%s')", command->getOp());
-  return NotFound;
-}
-
 void configureModeArchitecture() {
   log(CLASS_MAIN, Debug, "configureModeArchitecture()");
 }
@@ -215,7 +210,7 @@ void test_basic_behaviour() {
            configureModeArchitecture,
            runModeArchitecture,
            commandArchitecture,
-           commandProjExtended,
+           NULL,
            infoArchitecture,
            updateFirmware,
            testArchitecture,
