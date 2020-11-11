@@ -42,7 +42,7 @@
   "\n  vers            : show project version"                                                                                             \
   "\n  test            : test the architecture/hardware"                                                                                   \
   "\n  upda  ...       : update the firmware with the given target version"                                                                \
-  "\n  wifi            : init steady wifi"                                                                                                 \
+  "\n  wigo            : init steady wifi"                                                                                                 \
   "\n  wist            : stop steady wifi"                                                                                                 \
   "\n  get  ...        : display actor <actor> properties"                                                                                 \
   "\n  set  ...        : set an actor property (example: 'set body msg0 HELLO')"                                                           \
@@ -483,11 +483,11 @@ private:
       case Cmd::getCmdCode("mode"):
         if (c->checkArgs(1, "mode")) {
           const char* m = c->getAsLastArg(0);
-          if (strcmp("run", m)) {
+          if (strcmp("run", m) == 0) {
             log(CLASS_MODULE, Info, "-> Run mode");
             runCmd();
             return ExecutedInterrupt;
-          } else if (strcmp("conf", m)) {
+          } else if (strcmp("conf", m) == 0) {
             log(CLASS_MODULE, Info, "-> Configure mode");
             confCmd();
             return ExecutedInterrupt;
