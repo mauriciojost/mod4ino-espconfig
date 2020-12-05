@@ -3,6 +3,7 @@
 void Module::initSettings() {
   settings = new Settings("settings");
 }
+
 bool Module::inDebugMode() {
   return settings->getDebug();
 }

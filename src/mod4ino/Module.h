@@ -33,37 +33,6 @@
 #ifndef ERR_BUFFER_LENGTH
 #define ERR_BUFFER_LENGTH 64
 #endif // ERR_BUFFER_LENGTH
-
-#define HELP_COMMAND_CLI                                                                                                                   \
-  "\n  MODULE HELP"                                                                                                                        \
-  "\n  inte            : interrupt current ongoing action"                                                                                 \
-  "\n  mode [run,conf] : get or set the mode"                                                                                              \
-  "\n  info            : show info about the device"                                                                                       \
-  "\n  vers            : show project version"                                                                                             \
-  "\n  test            : test the architecture/hardware"                                                                                   \
-  "\n  upda  ...       : update the firmware with the given target version"                                                                \
-  "\n  wigo            : init steady wifi"                                                                                                 \
-  "\n  wist            : stop steady wifi"                                                                                                 \
-  "\n  get  ...        : display actor <actor> properties"                                                                                 \
-  "\n  set  ...        : set an actor property (example: 'set body msg0 HELLO')"                                                           \
-  "\n  slog ...        : change log options (examples: cxF;cyW;??E; means cx class to FINE, cy to WARN, rest to ERROR)"                    \
-  "\n  glog            : get log options"                                                                                                  \
-  "\n  clea            : clear device (filesystem, crashes stacktrace, etc.)"                                                              \
-  "\n  acta            : all act"                                                                                                          \
-  "\n  tall            : mark actors as 'changed' to force synchronization with the server"                                                \
-  "\n  acto ...        : make actor <x> act"                                                                                               \
-  "\n  wis1 ...        : set wifi ssid"                                                                                                    \
-  "\n  wip1 ...        : set wifi pass"                                                                                                    \
-  "\n  wis2 ...        : set wifi ssid (backup net)"                                                                                       \
-  "\n  wip2 ...        : set wifi pass (backup net)"                                                                                       \
-  "\n  cat  ...        : show content of a file (only if in insecure mode)"                                                                \
-  "\n  load            : load properties in persistent fs (mainly for credentials)"                                                        \
-  "\n  stor            : save properties in persistent fs (mainly for credentials)"                                                        \
-  "\n  save ...        : save a file <f> with content <y> in persistent fs (mainly for tuning) "                                           \
-  "\n  help            : show this help"                                                                                                   \
-  "\n  (all messages are shown as info log level)"                                                                                         \
-  "\n"
-
 enum ModuleStartupPropertiesCode {
   ModuleStartupPropertiesCodeSuccess = 0,
   ModuleStartupPropertiesCodeSkipped,
@@ -458,201 +427,105 @@ public:
 
 private:
   CmdExecStatus commandProject(Cmd *c) {
-
-    switch (c->getCmdCode()) {
-      case Cmd::getCmdCode("setp"): 
-        if (c->checkArgs(3, "actor", "property", "value")) {
-          Buffer actor(32);
-          Buffer prop(32);
-	        Buffer value(64);
-	        c->getArg(1, &value);
-          bot->setProp(c->getArg(0, &actor), c->getArg(1, &prop), &value);
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("getp"):
-        if (c->checkArgs(1, "actor")) {
-          getProps(c->getAsLastArg(0));
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("inte"):
+    if (c->matches("setp", "set properties of an actor", 3, "actor", "property", "value")) {
+      Buffer actor(32);
+      Buffer prop(32);
+      Buffer value(64);
+      c->getArg(1, &value);
+      bot->setProp(c->getArg(0, &actor), c->getArg(1, &prop), &value);
+      return Executed;
+    } else if (c->matches("getp", "get properties of a given actor", 1, "actor")) {
+      getProps(c->getAsLastArg(0));
+      return Executed;
+    } else if (c->matches("inte", "interrupt", 0)) {
+      return ExecutedInterrupt;
+    } else if (c->matches("mode", "change mode", 1, "[run|conf]")) {
+      const char* m = c->getAsLastArg(0);
+      if (strcmp("run", m) == 0) {
+        log(CLASS_MODULE, Info, "-> Run mode");
+        runCmd();
         return ExecutedInterrupt;
-      case Cmd::getCmdCode("mode"):
-        if (c->checkArgs(1, "mode")) {
-          const char* m = c->getAsLastArg(0);
-          if (strcmp("run", m) == 0) {
-            log(CLASS_MODULE, Info, "-> Run mode");
-            runCmd();
-            return ExecutedInterrupt;
-          } else if (strcmp("conf", m) == 0) {
-            log(CLASS_MODULE, Info, "-> Configure mode");
-            confCmd();
-            return ExecutedInterrupt;
-          } else {
-            return InvalidArgs;
-          }
-        }
-      case Cmd::getCmdCode("info"):
-        if (c->checkArgs(0)) {
-          infoCmd();
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("vers"):
-        if (c->checkArgs(0)) {
-          logRaw(CLASS_MODULE, User, STRINGIFY(PROJ_VERSION));
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("test"):
-        if (c->checkArgs(0)) {
-          test();
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("upda"):
-        if (c->checkArgs(1, "tgt-version")) {
-          update(c->getAsLastArg(0), STRINGIFY(PROJ_VERSION));
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("clea"):
-        if (c->checkArgs(0)) {
-          clearDevice();
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("glog"):
-        if (c->checkArgs(0)) {
-          log(CLASS_MODULE, User, "Log options: %s", (getLogOptions()==NULL?"":getLogOptions()));
-          logDemo();
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("slog"):
-        if (c->checkArgs(1, "options")) {
-          setLogOptions(c->getAsLastArg(0));
-          logDemo();
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("wis1"):
-        if (c->checkArgs(1, "ssid")) {
-          setSsid(c->getAsLastArg(0));
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("wip1"):
-        if (c->checkArgs(1), "pass") {
-          setPass(c->getAsLastArg(0));
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("wis2"):
-        if (c->checkArgs(1, "ssid")) {
-          setSsidBackup(c->getAsLastArg(0));
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("wip2"):
-        if (c->checkArgs(1, "pass")) {
-          setPassBackup(c->getAsLastArg(0));
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("wigo"):
-        if (c->checkArgs(0)) {
-          initWifi();
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("wist"):
-        if (c->checkArgs(0)) {
-          stopWifi();
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("acta"):
-        if (c->checkArgs(0)) {
-          actall();
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("tall"):
-        if (c->checkArgs(0)) {
-          touchall();
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("acto"):
-        if (c->checkArgs(1, "actor-name")) {
-          actone(c->getAsLastArg(0));
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("stor"):
-        if (c->checkArgs(0)) {
-          propSync->fsStoreActorsProps(); // store credentials
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("save"):
-        if (c->checkArgs(2, "file", "content")) {
-          Buffer bf(32);
-          const char *fname = c->getArg(0, &bf);
-          const char *content = c->getAsLastArg(1);
-          bool suc = fileWrite(fname, content);
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-  #ifdef INSECURE
-      case Cmd::getCmdCode("cat"): // could be potentially used to display credentials
-        if (c->checkArgs(1, "filename")) {
-          Buffer buf(CAT_BUFFER_LENGTH);
-          fileRead(c->getAsLastArg(0), &buf);
-          log(CLASS_MODULE, User, "### File: %s", c->getAsLastArg(0));
-          logRaw(CLASS_MODULE, User, buf.getBuffer());
-          log(CLASS_MODULE, User, "###");
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-  #endif // INSECURE
-      case Cmd::getCmdCode("load"):
-        if (c->checkArgs(0)) {
-          propSync->fsLoadActorsProps(); // load mainly credentials already set
-          log(CLASS_MODULE, Info, "Properties loaded from local copy");
-          return Executed;
-        } else {
-          return InvalidArgs;
-        }
-      case Cmd::getCmdCode("help"):
-      case Cmd::getCmdCode("?"):
-        logRaw(CLASS_MODULE, User, HELP_COMMAND_CLI);
-        return NotFound;
-      default:
-        return (commandProjectExtended == NULL? NotFound: commandProjectExtended(c));
+      } else if (strcmp("conf", m) == 0) {
+        log(CLASS_MODULE, Info, "-> Configure mode");
+        confCmd();
+        return ExecutedInterrupt;
+      } else {
+        return InvalidArgs;
+      }
+    } else if (c->matches("info", "show information", 0)) {
+      infoCmd();
+      return Executed;
+    } else if (c->matches("vers", "show version of the software", 0)) {
+      logRaw(CLASS_MODULE, User, STRINGIFY(PROJ_VERSION));
+      return Executed;
+    } else if (c->matches("test", "perform tests", 0)) {
+      test();
+      return Executed;
+    } else if (c->matches("upda", "update firmware", 1, "tgt-version")) {
+      update(c->getAsLastArg(0), STRINGIFY(PROJ_VERSION));
+      return Executed;
+    } else if (c->matches("clea", "clear device", 0)) {
+      clearDevice();
+      return Executed;
+    } else if (c->matches("glog", "", 0)) {
+      log(CLASS_MODULE, User, "Log options: %s", (getLogOptions()==NULL?"":getLogOptions()));
+      logDemo();
+      return Executed;
+    } else if (c->matches("slog", "set log options", 1, "options (example: ??F.)")) {
+      setLogOptions(c->getAsLastArg(0));
+      logDemo();
+      return Executed;
+    } else if (c->matches("wis1", "set ssid of main wifi network", 1, "ssid")) {
+      setSsid(c->getAsLastArg(0));
+      return Executed;
+    } else if (c->matches("wip1", "set pass of main wifi network", 1, "pass")) {
+      setPass(c->getAsLastArg(0));
+      return Executed;
+    } else if (c->matches("wis2", "set ssid of backup wifi network", 1, "ssid")) {
+      setSsidBackup(c->getAsLastArg(0));
+      return Executed;
+    } else if (c->matches("wip2", "set pass of backup wifi network", 1, "pass")) {
+      setPassBackup(c->getAsLastArg(0));
+      return Executed;
+    } else if (c->matches("wigo", "connect to wifi", 0)) {
+      initWifi();
+      return Executed;
+    } else if (c->matches("wist", "disconnect from wifi", 0)) {
+      stopWifi();
+      return Executed;
+    } else if (c->matches("acta", "make all devices act", 0)) {
+      actall();
+      return Executed;
+    } else if (c->matches("tall", "touch all devices", 0)) {
+      touchall();
+      return Executed;
+    } else if (c->matches("acto", "make the provided actor act", 1, "actor-name")) {
+      actone(c->getAsLastArg(0));
+      return Executed;
+    } else if (c->matches("stor", "store all actors properties in FS", 0)) {
+      propSync->fsStoreActorsProps(); // store credentials
+      return Executed;
+    } else if (c->matches("save", "save into the given file the provided content", 2, "file", "content")) {
+      Buffer bf(32);
+      const char *fname = c->getArg(0, &bf);
+      const char *content = c->getAsLastArg(1);
+      bool suc = fileWrite(fname, content);
+      return Executed;
+#ifdef INSECURE
+    } else if (c->matches("cat", "show content of a file", 1, "filename")) { // could be used to display credentials, that's why insecure
+      Buffer buf(CAT_BUFFER_LENGTH);
+      fileRead(c->getAsLastArg(0), &buf);
+      log(CLASS_MODULE, User, "### File: %s", c->getAsLastArg(0));
+      logRaw(CLASS_MODULE, User, buf.getBuffer());
+      log(CLASS_MODULE, User, "###");
+      return Executed;
+#endif // INSECURE
+    } else if (c->matches("load", "load all actors properties from FS", 0)) {
+      propSync->fsLoadActorsProps(); // load mainly credentials already set
+      log(CLASS_MODULE, Info, "Properties loaded from local copy");
+      return Executed;
+    } else {
+      return NotFound;
     }
   }
 
