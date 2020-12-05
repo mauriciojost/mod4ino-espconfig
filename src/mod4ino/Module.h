@@ -465,8 +465,11 @@ private:
       update(PROJECT_ID, c->getAsLastArg(0), STRINGIFY(PROJ_VERSION));
       return Executed;
 #ifdef INSECURE
-    } else if (c->matches("updp", "update firmware to different project", 1, "tgt-project")) {
-      update(c->getAsLastArg(0), "LATEST", STRINGIFY(PROJ_VERSION));
+    } else if (c->matches("updc", "update firmware cross project", 2, "tgt-project", "tgt-version")) {
+      Buffer bf(32);
+      const char *project = c->getArg(0, &bf);
+      const char *version = c->getAsLastArg(1);
+      update(project, version, STRINGIFY(PROJ_VERSION));
       return Executed;
 #endif // INSECURE
     } else if (c->matches("clea", "clear device", 0)) {
