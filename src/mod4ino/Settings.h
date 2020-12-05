@@ -101,7 +101,7 @@ private:
 #endif // INSECURE
   Metadata *md;
   Timing *batchTiming;
-  void (*update)(const char *targetVersion, const char *currentVersion);
+  void (*update)(const char *projectId, const char *targetVersion, const char *currentVersion);
   PropSync *propSync;
 
 public:
@@ -190,7 +190,7 @@ public:
         if (update != NULL) {
           PropSyncStatusCode st = propSync->pushActors(true); // push properties to the server
           if (!propSync->isFailure(st)) {
-            update(target->getBuffer(), currVersion); // update
+            update(PROJECT_ID, target->getBuffer(), currVersion); // update
             updateScheduled = false; // in case update failed, forget the attempt
           } else {
             log(CLASS_SETTINGS, Warn, "UPD SKP(%d)", (int)st);
@@ -207,7 +207,7 @@ public:
     Module *m,
     const char *pr,
     const char *pl,
-    void (*u)(const char *targetVersion, const char *currentVersion),
+    void (*u)(const char *proj, const char *targetVersion, const char *currentVersion),
     PropSync *ps
   ) {
 #ifdef INSECURE

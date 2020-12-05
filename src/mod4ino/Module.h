@@ -110,7 +110,7 @@ private:
   void (*test)();
 
   // Firmware update.
-  void (*update)(const char *targetVersion, const char *currentVersion);
+  void (*update)(const char *project, const char *targetVersion, const char *currentVersion);
 
   // Retrieve the login for the main4ino API.
   const char *(*apiDeviceLogin)();
@@ -245,7 +245,7 @@ public:
              CmdExecStatus (*commandArchitectureFunc)(Cmd *cmd),
              std::function<CmdExecStatus (Cmd* cmd)> commandProjectExtendedFunc,
              void (*infoFunc)(),
-             void (*updateFunc)(const char *targetVersion, const char *currentVersion),
+             void (*updateFunc)(const char* project, const char *targetVersion, const char *currentVersion),
              void (*testFunc)(),
              const char *(*apiDeviceLoginFunc)(),
              const char *(*apiDevicePassFunc)(),
@@ -437,16 +437,16 @@ private:
     } else if (c->matches("getp", "get properties of a given actor", 1, "actor")) {
       getProps(c->getAsLastArg(0));
       return Executed;
-    } else if (c->matches("inte", "interrupt", 0)) {
+    } else if (c->matches("inte", "interrupt current cycle", 0)) {
       return ExecutedInterrupt;
-    } else if (c->matches("mode", "change mode", 1, "[run|conf]")) {
+    } else if (c->matches("mode", "change to mode", 1, "[run|conf]")) {
       const char* m = c->getAsLastArg(0);
       if (strcmp("run", m) == 0) {
-        log(CLASS_MODULE, Info, "-> Run mode");
+        log(CLASS_MODULE, Info, "-> run mode");
         runCmd();
         return ExecutedInterrupt;
       } else if (strcmp("conf", m) == 0) {
-        log(CLASS_MODULE, Info, "-> Configure mode");
+        log(CLASS_MODULE, Info, "-> conf mode");
         confCmd();
         return ExecutedInterrupt;
       } else {
@@ -462,13 +462,18 @@ private:
       test();
       return Executed;
     } else if (c->matches("upda", "update firmware", 1, "tgt-version")) {
-      update(c->getAsLastArg(0), STRINGIFY(PROJ_VERSION));
+      update(PROJECT_ID, c->getAsLastArg(0), STRINGIFY(PROJ_VERSION));
       return Executed;
+#ifdef INSECURE
+    } else if (c->matches("updp", "update firmware to different project", 1, "tgt-project")) {
+      update(c->getAsLastArg(0), "LATEST", STRINGIFY(PROJ_VERSION));
+      return Executed;
+#endif // INSECURE
     } else if (c->matches("clea", "clear device", 0)) {
       clearDevice();
       return Executed;
     } else if (c->matches("glog", "", 0)) {
-      log(CLASS_MODULE, User, "Log options: %s", (getLogOptions()==NULL?"":getLogOptions()));
+      log(CLASS_MODULE, User, "Options: %s", (getLogOptions()==NULL?"":getLogOptions()));
       logDemo();
       return Executed;
     } else if (c->matches("slog", "set log options", 1, "options (example: ??F.)")) {
