@@ -92,7 +92,7 @@ private:
   void (*preCycleRunMode)();
 
   // Function that executes a command from the underlying architecture point of view.
-  CmdExecStatus (*commandArchitecture)(Cmd *cmd);
+  CmdExecStatus (*commandPlatform)(Cmd *cmd);
 
   // Function that executes a command from the project using this module
   std::function<CmdExecStatus (Cmd* cmd)> commandProjectExtended;
@@ -142,7 +142,7 @@ private:
   void setPassBackup(const char* c);
   const char* getPassBackup();
 
-  std::function<CmdExecStatus (Cmd*)> commandPlatformFuncStd = [&](Cmd* cmd) {return commandArchitecture(cmd);};
+  std::function<CmdExecStatus (Cmd*)> commandPlatformFuncStd = [&](Cmd* cmd) {return commandPlatform(cmd);};
   std::function<CmdExecStatus (Cmd*)> commandProjectFuncStd = [&](Cmd* cmd) {return commandProject(cmd);};
 
   /**
@@ -186,7 +186,7 @@ public:
     deepSleepNotInterruptable = NULL;
     cycleConfigureMode = NULL;
     preCycleRunMode = NULL;
-    commandArchitecture = NULL;
+    commandPlatform = NULL;
     commandProjectExtended = NULL;
     fileRead = NULL;
     fileWrite = NULL;
@@ -242,7 +242,7 @@ public:
              void (*deepSleepNotInterruptableFunc)(time_t cycleBegin, time_t periodSec),
              void (*cycleConfigureModeFunc)(),
              void (*preCycleRunModeFunc)(),
-             CmdExecStatus (*commandArchitectureFunc)(Cmd *cmd),
+             CmdExecStatus (*commandPlatformFunc)(Cmd *cmd),
              std::function<CmdExecStatus (Cmd* cmd)> commandProjectExtendedFunc,
              void (*infoFunc)(),
              void (*updateFunc)(const char* project, const char *targetVersion, const char *currentVersion),
@@ -260,7 +260,7 @@ public:
     deepSleepNotInterruptable = deepSleepNotInterruptableFunc;
     cycleConfigureMode = cycleConfigureModeFunc;
     preCycleRunMode = preCycleRunModeFunc;
-    commandArchitecture = commandArchitectureFunc;
+    commandPlatform = commandPlatformFunc;
     commandProjectExtended = commandProjectExtendedFunc;
     fileRead = fileReadFunc;
     fileWrite = fileWriteFunc;
@@ -475,7 +475,7 @@ private:
     } else if (c->matches("clea", "clear device", 0)) {
       clearDevice();
       return Executed;
-    } else if (c->matches("glog", "", 0)) {
+    } else if (c->matches("glog", "get log options", 0)) {
       log(CLASS_MODULE, User, "Options: %s", (getLogOptions()==NULL?"":getLogOptions()));
       logDemo();
       return Executed;
@@ -533,7 +533,7 @@ private:
       log(CLASS_MODULE, Info, "Properties loaded from local copy");
       return Executed;
     } else {
-      return NotFound;
+      return commandProjectExtended(c);
     }
   }
 
