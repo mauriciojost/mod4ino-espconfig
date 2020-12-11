@@ -431,11 +431,14 @@ private:
       Buffer actor(32);
       Buffer prop(32);
       Buffer value(64);
-      c->getArg(1, &value);
+      c->getArg(2, &value);
       bot->setProp(c->getArg(0, &actor), c->getArg(1, &prop), &value);
       return Executed;
     } else if (c->matches("getp", "get properties of a given actor", 1, "actor")) {
       getProps(c->getAsLastArg(0));
+      return Executed;
+    } else if (c->matches("getp", "get properties of all actors", 0)) {
+      getAllProps();
       return Executed;
     } else if (c->matches("inte", "interrupt current cycle", 0)) {
       return ExecutedInterrupt;
@@ -629,6 +632,16 @@ public:
   }
 
 public:
+
+  void getAllProps() {
+    Array<Actor *> *actors = bot->getActors();
+    for (unsigned int i = 0; i < actors->size(); i++) {
+      const char *aname = actors->get(i)->getName();
+      log(CLASS_MODULE, Info, "# '%s'", aname);
+      getProps(aname);
+    }
+  }
+
   void getProps(const char *actorN) {
     Buffer contentAuxBuffer(64);
     Array<Actor *> *actors = bot->getActors();
