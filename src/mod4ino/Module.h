@@ -33,6 +33,10 @@
 #ifndef ERR_BUFFER_LENGTH
 #define ERR_BUFFER_LENGTH 64
 #endif // ERR_BUFFER_LENGTH
+
+#define LOG_CAPACITY_THRESHOLD 0.8
+#define LOG_PLOG_REPORT_LENGTH 32
+
 enum ModuleStartupPropertiesCode {
   ModuleStartupPropertiesCodeSuccess = 0,
   ModuleStartupPropertiesCodeSkipped,
@@ -210,7 +214,14 @@ public: bool pushLogs() {
       return true;
 
     sizet len = getLogBuffer()->getLength();
-    log(CLASS_MODULE, Info, "PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getEffCapacity());
+    if (len > getLogBuffer()->getEffCapacity() * LOG_CAPACITY_THRESHOLD) {
+      if (getLogBuffer()->getEffCapacity() - len > LOG_PLOG_REPORT_LENGTH) {
+        getLogBuffer()->drop(LOG_PLOG_REPORT_LENGTH);
+      }
+      log(CLASS_MODULE, Warn, "...PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getEffCapacity());
+    } else {
+      log(CLASS_MODULE, Info, "PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getEffCapacity());
+    }
     PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
     if (getPropSync()->isFailure(status)) {
       log(CLASS_MODULE, Warn, "PLogs KO");
@@ -540,18 +551,48 @@ private:
     }
   }
 
-public:
-  void cycleBot(bool mode, bool set, bool cycle) {
-    TimingInterrupt interruptType = TimingInterruptNone;
-    if (cycle) {
-      interruptType = TimingInterruptCycle;
+private:
+  void actorAct(time_t currentTime, Actor *actor) {
+    Timing *t = actor->getTiming();
+    const char *actorName = actor->getName();
+
+    if (t == NULL) {
+      log(CLASS_MODULE, Error, "No Timing! %s", actor->getName());
+      return;
     }
-    // execute a cycle on the bot
-    bot->cycle(mode, set, interruptType);
+
+    log(CLASS_MODULE, Fine, "%.5s t%ld(+%ld)", actorName, t->getCurrentTime(), currentTime - t->getCurrentTime());
+    while (t->catchesUp(currentTime)) {
+      Act act = actor->act(actor->getMetadata());
+      if (!act.isEmpty()) {
+        act.iterate();
+        Buffer cmd(COMMAND_MAX_LENGTH);
+        while(act.command(&cmd) != -1) {
+          Cmd c(&cmd);
+          CmdExecStatus s = command(&c);
+          if (s != Executed) {
+            log(CLASS_MODULE, Error, "Cmd failed %s: %s", actor->getName(), cmd.getBuffer());
+            return;
+          }
+        }
+      }
+    }
   }
 
-  // All getters should be removed, and initialization of these instances below should
-  // be done in Module itself. This should help decrease the size of
+
+private:
+  void cycleBotRunMode() {
+    time_t t = getClock()->currentTime();
+    log(CLASS_MODULE, Info, "CYCLE: %04d-%02d-%02d %02d:%02d:%02d", GET_YEARS(t), GET_MONTHS(t), GET_DAYS(t), GET_HOURS(t), GET_MINUTES(t), GET_SECONDS(t));
+
+    for (unsigned int aIndex = 0; aIndex < actors->size(); aIndex++) {
+      time_t currentTime = getClock()->currentTime();
+      actorAct(currentTime, actors->get(aIndex));
+      pushLogs();
+    }
+  }
+
+  // All getters should be removed if possible.
 public:
   SerBot *getBot() {
     return bot;
@@ -670,7 +711,8 @@ public:
 public:
   void runMode() {
     preCycleRunMode();
-    cycleBot(false, false, true);
+    pushLogs();
+    cycleBotRunMode();
   }
 
 private:
