@@ -1,14 +1,10 @@
 #include <mod4ino/Module.h>
 
-void Module::initSettings() {
-  settings = new Settings("settings");
-}
-
 bool Module::inDebugMode() {
   return settings->getDebug();
 }
 
-void Module::setupSettings(const char *project, const char *platform) {
+void Module::setupProjectPlatform(const char *project, const char *platform) {
   settings->setup(this, project, platform, update, propSync);
 }
 

@@ -12,6 +12,7 @@
 #include <main4ino/Authenticable.h>
 #include <main4ino/SerBot.h>
 #include <main4ino/Table.h>
+#include <main4ino/Device.h>
 #include <mod4ino/MsgClearMode.h>
 #include <mod4ino/Settings.h>
 #include <main4ino/CmdExecStatus.h>
@@ -71,6 +72,7 @@ private:
   Array<Actor *> *actors;
   Clock *clock;
   Settings *settings;
+  Device *device;
   SerBot *bot;
   const char *description;
 
@@ -133,8 +135,9 @@ private:
    
   // Methods depending on Settings definition (to break cyclic dependency)
   void initSettings();
+  void initDevice();
   bool inDebugMode();
-  void setupSettings(const char *project, const char *platform);
+  void setupProjectPlatform(const char *project, const char *platform);
   Timing* getBatchTiming();
   void updateIfMust();
   void setSsid(const char* c);
@@ -172,13 +175,13 @@ private:
 public:
   Module() {
     actors = new Array<Actor *>;
-
-    initSettings();
+    settings = new Settings("mod4ino");
+    device = new Device("device");
     propSync = new PropSync("propsync");
     clockSync = new ClockSync("clocksync");
     clock = new Clock("clock");
 
-    actors->add(4, (Actor *)settings, (Actor *)propSync, (Actor *)clockSync, (Actor *)clock);
+    actors->add(5, (Actor *)device, (Actor *)settings, (Actor *)propSync, (Actor *)clockSync, (Actor *)clock);
 
     bot = new SerBot(clock, actors);
 
@@ -220,7 +223,7 @@ public: bool pushLogs() {
       }
       log(CLASS_MODULE, Warn, "...PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getEffCapacity());
     } else {
-      log(CLASS_MODULE, Info, "PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getEffCapacity());
+      log(CLASS_MODULE, Fine, "PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getEffCapacity());
     }
     PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
     if (getPropSync()->isFailure(status)) {
@@ -290,7 +293,7 @@ public:
     bot->setProjectCommand(commandProjectFuncStd);
     bot->setPlatformCommand(commandPlatformFuncStd);
 
-    setupSettings(project, platform);
+    setupProjectPlatform(project, platform);
   }
 
 private: 
@@ -616,6 +619,10 @@ public:
 public:
   Settings *getSettings() {
     return settings;
+  }
+
+  Device *getDevice() {
+    return device;
   }
 
   /**
