@@ -354,6 +354,8 @@ public:
       Buffer b(ERR_BUFFER_LENGTH);
       b.fill("PSync KO(%d:%s)", serSyncd, getPropSync()->statusDescription(serSyncd));
       return failed(b, ModuleStartupPropertiesCodePropertiesSyncFailure);
+    } else {
+      propSync->fsStoreActorsProps(); // store credentials
     }
 
     if (description != NULL) {
@@ -760,6 +762,7 @@ public:
       case (RunMode):
         log(CLASS_MODULE, Info, "#LOOP(%s)", STRINGIFY(PROJ_VERSION));
         runMode();
+        getPropSync()->fsStoreActorsProps(); // store credentials
         log(CLASS_MODULE, Info, "#ENDLOOP");
         pushLogs();
         if (getBot()->getMode() != RunMode) {
