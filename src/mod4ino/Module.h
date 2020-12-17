@@ -137,7 +137,7 @@ private:
   void initSettings();
   void initDevice();
   bool inDebugMode();
-  void setupProjectPlatform(const char *project, const char *platform);
+  void setupSettings();
   Timing* getBatchTiming();
   void updateIfMust();
   void setSsid(const char* c);
@@ -293,7 +293,7 @@ public:
     bot->setProjectCommand(commandProjectFuncStd);
     bot->setPlatformCommand(commandPlatformFuncStd);
 
-    setupProjectPlatform(project, platform);
+    setupSettings();
   }
 
 private: 

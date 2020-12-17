@@ -4,8 +4,8 @@ bool Module::inDebugMode() {
   return settings->getDebug();
 }
 
-void Module::setupProjectPlatform(const char *project, const char *platform) {
-  settings->setup(this, project, platform, update, propSync);
+void Module::setupSettings() {
+  settings->setup(this, update, propSync);
 }
 
 void Module::setSsid(const char* c) {

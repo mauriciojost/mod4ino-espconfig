@@ -34,7 +34,6 @@
 
 #define CREDENTIAL_BUFFER_SIZE 64
 #define STATUS_BUFFER_SIZE 64
-#define VERSION_BUFFER_SIZE 32
 #define DEV_DEBUG_BUFFER_SIZE 16
 
 #define LOGOPTS_BUFFER_SIZE (4 * 8)
@@ -43,18 +42,8 @@
 #define SKIP_UPDATES_CODE "SKIP"
 #define LATEST_UPDATES_CODE "LATEST"
 
-#define ALIAS_BUFFER_SIZE 16
-#define DEFAULT_ALIAS "alias"
-
-#define PROJECT_BUFFER_SIZE 16
-#define DEFAULT_PROJECT "project"
-
-#define PLATFORM_BUFFER_SIZE 16
-#define DEFAULT_PLATFORM "platform"
-
 enum SettingsProps {
   SettingsDebugProp = 0,    // boolean, define if the device is in debug mode
-  SettingsVersionProp,      // string, defines the current version
   SettingsMiniPeriodMsProp, // period in msec for the device to got to sleep before waking up if any interrupts (remaining unresponsive from
                             // user) (only if no deep sleep)
   SettingsWifiSsidProp,     // wifi ssid
@@ -69,9 +58,6 @@ enum SettingsProps {
   SettingsCmdFreqProp,      // frequency of execution of command
   SettingsCmdLineProp,      // command line to execute
 #endif // INSECURE
-  SettingsAliasProp,        // alias name for this device
-  SettingsProjectProp,      // project name
-  SettingsPlatformProp,     // platform name
   SettingsPropsDelimiter    // amount of properties
 };
 
@@ -89,11 +75,7 @@ private:
   Buffer *ssidb;
   Buffer *passb;
   Buffer *logOpts;
-  Buffer *version;
   Buffer *target;
-  Buffer *alias;
-  Buffer *project;
-  Buffer *platform;
 #ifdef INSECURE
   Buffer *cmdLine;
   Timing *cmdTiming;
@@ -119,20 +101,8 @@ public:
     passb = new Buffer(CREDENTIAL_BUFFER_SIZE);
     passb->load(WIFI_PASSWORD_STEADY);
 
-    alias = new Buffer(ALIAS_BUFFER_SIZE);
-    alias->load(DEFAULT_ALIAS);
-
-    project = new Buffer(PROJECT_BUFFER_SIZE);
-    project->load(DEFAULT_PROJECT);
-
-    platform = new Buffer(PLATFORM_BUFFER_SIZE);
-    platform->load(DEFAULT_PLATFORM);
-
     logOpts = new Buffer(LOGOPTS_BUFFER_SIZE);
     logOpts->load(LOGOPTS_DEFAULT);
-
-    version = new Buffer(VERSION_BUFFER_SIZE);
-    version->load(STRINGIFY(PROJ_VERSION));
 
     devDebug = new Buffer(DEV_DEBUG_BUFFER_SIZE);
     devDebug->clear();
@@ -190,7 +160,7 @@ public:
         if (update != NULL) {
           PropSyncStatusCode st = propSync->pushActors(true); // push properties to the server
           if (!propSync->isFailure(st)) {
-            update(PROJECT_ID, target->getBuffer(), currVersion); // update
+            update(STRINGIFY(PROJECT_ID), target->getBuffer(), currVersion); // update
             updateScheduled = false; // in case update failed, forget the attempt
           } else {
             log(CLASS_SETTINGS, Warn, "UPD SKP(%d)", (int)st);
@@ -205,8 +175,6 @@ public:
 
   void setup(
     Module *m,
-    const char *pr,
-    const char *pl,
     void (*u)(const char *proj, const char *targetVersion, const char *currentVersion),
     PropSync *ps
   ) {
@@ -214,8 +182,6 @@ public:
     mod = m;
 #endif // INSECURE
     update = u;
-    setProject(pr);
-    setPlatform(pl);
     propSync = ps;
   }
 
@@ -231,8 +197,6 @@ public:
         return SENSITIVE_PROP_PREFIX "wifipassb";
       case (SettingsDebugProp):
         return DEBUG_PROP_PREFIX "debug";
-      case (SettingsVersionProp):
-        return DEBUG_PROP_PREFIX "version";
       case (SettingsMiniPeriodMsProp):
         return ADVANCED_PROP_PREFIX "mperiodms";
       case (SettingsLogOptionsProp):
@@ -249,12 +213,6 @@ public:
       case (SettingsCmdLineProp):
         return ADVANCED_PROP_PREFIX "cmd";
 #endif // INSECURE
-      case (SettingsAliasProp):
-        return "alias";
-      case (SettingsProjectProp):
-        return "project";
-      case (SettingsPlatformProp):
-        return "platform";
       default:
         return "";
     }
@@ -264,9 +222,6 @@ public:
     switch (propIndex) {
       case (SettingsDebugProp):
         setPropValue(m, targetValue, actualValue, devDebug);
-        break;
-      case (SettingsVersionProp):
-        setPropValue(m, NULL, actualValue, version); // read only, truth comes from firmware
         break;
       case (SettingsMiniPeriodMsProp):
         setPropInteger(m, targetValue, actualValue, &miniperiodms);
@@ -306,15 +261,6 @@ public:
         setPropValue(m, targetValue, actualValue, cmdLine);
         break;
 #endif // INSECURE
-      case (SettingsAliasProp):
-        setPropValue(m, targetValue, actualValue, alias);
-        break;
-      case (SettingsProjectProp):
-        setPropValue(m, NULL, actualValue, project); // read only, truth comes from the firmware
-        break;
-      case (SettingsPlatformProp):
-        setPropValue(m, NULL, actualValue, platform); // read only, truth comes from the firmware
-        break;
       default:
         break;
     }
@@ -399,26 +345,6 @@ public:
 
   Timing* getBatchTiming() {
     return batchTiming;
-  }
-
-  const char* getAlias() {
-    return alias->getBuffer();
-  }
-
-  const char* getProject() {
-    return project->getBuffer();
-  }
-
-  const char* getPlatform() {
-    return platform->getBuffer();
-  }
-
-  void setProject(const char *p) {
-    project->load(p);
-  }
-
-  void setPlatform(const char *p) {
-    platform->load(p);
   }
 
 };
