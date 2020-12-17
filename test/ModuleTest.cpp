@@ -73,7 +73,7 @@ HttpResponse httpRequest(HttpMethod req, const char *url, Stream *body, Table *h
 
   // RESTORE SUMMARY
   if (req == HttpGet && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/summary?status=C", url) == 0) {
-    return HttpResponse(HTTP_OK, response->fill("{\"settings\":{\"+bfreq\":\"~10s\"}}"), nop);
+    return HttpResponse(HTTP_OK, response->fill("{\"mod4ino\":{\"+bfreq\":\"~10s\"}}"), nop);
 
   // RETRIEVE LAST SUMMARY REPORT
   } else if (req == HttpGet && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/reports/summary?status=C", url) == 0) {
@@ -82,7 +82,7 @@ HttpResponse httpRequest(HttpMethod req, const char *url, Stream *body, Table *h
 
   // RETRIEVE TARGETS NOT CONSUMED (I.E. CLOSED STATUS) AND COMMIT THEM
   } else if (req == HttpGet && strcmp(MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/targets/summary?status=C&newstatus=X", url) == 0) {
-    return HttpResponse(HTTP_OK, response->fill("{\"settings\":{\"+bfreq\":\"~20s\"}}"), nop);
+    return HttpResponse(HTTP_OK, response->fill("{\"mod4ino\":{\"+bfreq\":\"~20s\"}}"), nop);
 
     // PRE-PUSH BY ACTOR (REPORTS)
   } else if (req == HttpPost && sscanf(url, MAIN4INOSERVER_API_HOST_BASE "/api/v1/devices/testdevice/%[a-z]", str1) == 1) {
