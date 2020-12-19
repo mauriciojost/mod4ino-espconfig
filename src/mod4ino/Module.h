@@ -227,10 +227,10 @@ public: bool pushLogs() {
     }
     PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
     if (getPropSync()->isFailure(status)) {
-      log(CLASS_MODULE, Warn, "PLogs KO");
+      log(CLASS_MODULE, Warn, "PLog KO");
       return false;
     } else {
-      log(CLASS_MODULE, Fine, "PLogs OK");
+      log(CLASS_MODULE, Info, "PLog OK");
       getLogBuffer()->clear();
       return true;
     }
@@ -298,7 +298,7 @@ public:
 
 private: 
   StartupStatus failed(Buffer msg, ModuleStartupPropertiesCode code) {
-     log(CLASS_MODULE, Error, "SU: %s", msg.getBuffer());
+     log(CLASS_MODULE, Error, "Startup failed: %s", msg.getBuffer());
      return StartupStatus(code, ConfigureMode, msg);
   }
 
@@ -311,11 +311,8 @@ public:
 
 private:
   void loadFsProps() {
-
-    log(CLASS_MODULE, Info, "LGProps/FS");
+    log(CLASS_MODULE, Info, "Load props (fs)");
     getPropSync()->fsLoadActorsProps();
-
-    log(CLASS_MODULE, Info, "LM4INOProps/FS");
     getPropSync()->setLoginPass(apiDeviceLogin(), apiDevicePass()); // may override credentials loaded in steps above
     getClockSync()->setLoginPass(apiDeviceLogin(), apiDevicePass());
   }
@@ -339,50 +336,50 @@ public:
 
     loadFsProps();
 
-    log(CLASS_MODULE, Info, "SyncM4INO");
+    log(CLASS_MODULE, Info, "Load props (server)");
     bool oneRun = oneRunModeSafe();
     PropSyncStatusCode serSyncd = PropSyncStatusCodeUnknown;
     if (oneRun) {
-      log(CLASS_MODULE, Info, "(1run)Pull");
+      log(CLASS_MODULE, Info, "Pull");
       serSyncd = getPropSync()->pullActors(); // only pull, push is postponed
     } else {
-      log(CLASS_MODULE, Info, "(!1run)Pull&push");
+      log(CLASS_MODULE, Info, "Pull & push");
       serSyncd = getPropSync()->pullPushActors(false); // sync properties from the server
     }
 
     if (getPropSync()->isFailure(serSyncd)) {
       Buffer b(ERR_BUFFER_LENGTH);
-      b.fill("PSync KO(%d:%s)", serSyncd, getPropSync()->statusDescription(serSyncd));
+      b.fill("Prop sync KO(%d:%s)", serSyncd, getPropSync()->statusDescription(serSyncd));
       return failed(b, ModuleStartupPropertiesCodePropertiesSyncFailure);
     } else {
       propSync->fsStoreActorsProps(); // store credentials
     }
 
     if (description != NULL) {
-      log(CLASS_MODULE, Info, "SDesc");
+      log(CLASS_MODULE, Info, "Push description");
       getPropSync()->pushDescription(description);
     } else {
-      log(CLASS_MODULE, Fine, "No SDesc");
+      log(CLASS_MODULE, Fine, "Skip push description");
     }
 
     time_t leftTime = getBot()->getClock()->currentTime();
 
     Buffer timeAux(19);
-    log(CLASS_MODULE, Info, "<Tims:%s", Timing::humanize(leftTime, &timeAux));
+    log(CLASS_MODULE, Info, "Time is?%s", Timing::humanize(leftTime, &timeAux));
     getBot()->setActorsTime(leftTime);
 
-    log(CLASS_MODULE, Info, "SClock");
+    log(CLASS_MODULE, Info, "Clock sync");
     // sync real date / time on clock, block if a single run is requested
     bool freezeTime = oneRun;
     bool clockSyncd = getClockSync()->syncClock(freezeTime, DEFAULT_CLOCK_SYNC_ATTEMPTS);
-    log(CLASS_MODULE, Info, ">Tims:%s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
+    log(CLASS_MODULE, Info, "Time is:%s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
     if (!clockSyncd) {
       Buffer b(ERR_BUFFER_LENGTH);
-      b.fill("SClock KO(%d)", clockSyncd);
+      b.fill("Sync clock KO(%d)", clockSyncd);
       return failed(b, ModuleStartupPropertiesCodeClockSyncFailure);
     }
 
-    log(CLASS_MODULE, Info, "STUP OK");
+    log(CLASS_MODULE, Info, "Startup OK");
 
     pushLogs();
 
@@ -571,7 +568,7 @@ private:
       return;
     }
 
-    log(CLASS_MODULE, Fine, "%.5s t%ld(+%ld)", actorName, t->getCurrentTime(), currentTime - t->getCurrentTime());
+    log(CLASS_MODULE, Debug, "%.5s t%ld(+%ld)", actorName, t->getCurrentTime(), currentTime - t->getCurrentTime());
     while (t->catchesUp(currentTime)) {
       Act act = actor->act(actor->getMetadata());
       if (!act.isEmpty()) {
@@ -596,8 +593,10 @@ private:
     log(CLASS_MODULE, Info, "CYCLE: %04d-%02d-%02d %02d:%02d:%02d", GET_YEARS(t), GET_MONTHS(t), GET_DAYS(t), GET_HOURS(t), GET_MINUTES(t), GET_SECONDS(t));
 
     for (unsigned int aIndex = 0; aIndex < actors->size(); aIndex++) {
+      Actor* actor = actors->get(aIndex);
+      log(CLASS_MODULE, Info, "%s: act!", actor->getName());
       time_t currentTime = getClock()->currentTime();
-      actorAct(currentTime, actors->get(aIndex));
+      actorAct(currentTime, actor);
       pushLogs();
     }
   }
@@ -683,6 +682,9 @@ public:
 
 public:
   void infoCmd() {
+    log(CLASS_MODULE, User, "Platfor: %s", STRINGIFY(PLATFORM_ID));
+    log(CLASS_MODULE, User, "Project: %s", STRINGIFY(PROJECT_ID));
+    log(CLASS_MODULE, User, "Version: %s", STRINGIFY(PROJ_VERSION));
     info();
   }
 
