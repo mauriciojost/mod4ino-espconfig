@@ -769,8 +769,10 @@ public:
       case (RunMode):
         log(CLASS_MODULE, Info, "#LOOP(%s)", STRINGIFY(PROJ_VERSION));
         runMode();
-        getPropSync()->fsStoreActorsProps(); // store credentials
         log(CLASS_MODULE, Info, "#ENDLOOP");
+        pushLogs();
+        log(CLASS_MODULE, Info, "Storing actors...");
+        getPropSync()->fsStoreActorsProps(); // store credentials
         pushLogs();
         if (getBot()->getMode() != RunMode) {
           log(CLASS_MODULE, Debug, "No longer run mode!");

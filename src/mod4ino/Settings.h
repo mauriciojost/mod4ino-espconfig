@@ -163,7 +163,7 @@ public:
             update(STRINGIFY(PROJECT_ID), target->getBuffer(), currVersion); // update
             updateScheduled = false; // in case update failed, forget the attempt
           } else {
-            log(CLASS_SETTINGS, Warn, "UPD SKP(%d)", (int)st);
+            log(CLASS_SETTINGS, Warn, "Update skipped(%d)", (int)st);
           }
         } else {
           log(CLASS_SETTINGS, Warn, "No init.");
