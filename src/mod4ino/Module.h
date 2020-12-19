@@ -223,7 +223,7 @@ public: bool pushLogs() {
       }
       log(CLASS_MODULE, Warn, "...PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getEffCapacity());
     } else {
-      log(CLASS_MODULE, Fine, "PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getEffCapacity());
+      log(CLASS_MODULE, Info, "PLog(%lu/%lu)...", (unsigned long)len, getLogBuffer()->getEffCapacity());
     }
     PropSyncStatusCode status = getPropSync()->pushLogMessages(getLogBuffer()->getBuffer());
     if (getPropSync()->isFailure(status)) {
