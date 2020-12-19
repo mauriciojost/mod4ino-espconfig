@@ -443,12 +443,13 @@ public:
 
 private:
   CmdExecStatus commandProject(Cmd *c) {
-    if (c->matches("setp", "set properties of an actor", 3, "actor", "property", "value")) {
+    if (c->matches("setp", "set properties of an actor and store", 3, "actor", "property", "value")) {
       Buffer actor(32);
       Buffer prop(32);
       Buffer value(64);
       c->getArg(2, &value);
       bot->setProp(c->getArg(0, &actor), c->getArg(1, &prop), &value);
+      propSync->fsStoreActorsProps();
       return Executed;
     } else if (c->matches("getp", "get properties of a given actor", 1, "actor")) {
       getProps(c->getAsLastArg(0));
@@ -504,15 +505,19 @@ private:
       return Executed;
     } else if (c->matches("wis1", "set ssid of main wifi network", 1, "ssid")) {
       setSsid(c->getAsLastArg(0));
+      propSync->fsStoreActorsProps();
       return Executed;
     } else if (c->matches("wip1", "set pass of main wifi network", 1, "pass")) {
       setPass(c->getAsLastArg(0));
+      propSync->fsStoreActorsProps();
       return Executed;
     } else if (c->matches("wis2", "set ssid of backup wifi network", 1, "ssid")) {
       setSsidBackup(c->getAsLastArg(0));
+      propSync->fsStoreActorsProps();
       return Executed;
     } else if (c->matches("wip2", "set pass of backup wifi network", 1, "pass")) {
       setPassBackup(c->getAsLastArg(0));
+      propSync->fsStoreActorsProps();
       return Executed;
     } else if (c->matches("wigo", "connect to wifi", 0)) {
       initWifi();
