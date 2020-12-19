@@ -482,7 +482,7 @@ private:
       test();
       return Executed;
     } else if (c->matches("upda", "update firmware", 1, "tgt-version")) {
-      update(PROJECT_ID, c->getAsLastArg(0), STRINGIFY(PROJ_VERSION));
+      update(STRINGIFY(PROJECT_ID), c->getAsLastArg(0), STRINGIFY(PROJ_VERSION));
       return Executed;
 #ifdef INSECURE
     } else if (c->matches("updc", "update firmware cross project", 2, "tgt-project", "tgt-version")) {
