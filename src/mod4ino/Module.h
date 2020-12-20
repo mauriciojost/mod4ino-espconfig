@@ -322,6 +322,8 @@ private:
    * Start up all module's properties
    *
    * Retrieve credentials and other properties from FS and server and report actual ones.
+   * By this point, only resolution and server-sync of properties of actors took place, 
+   * no actual acting on them.
    *
    * 0. Load properties from the file system (general properties/credentials not related to the framework).
    * 1. Load properties from the file system (credentials related to the framework).
@@ -367,14 +369,14 @@ public:
     time_t leftTime = getBot()->getClock()->currentTime();
 
     Buffer timeAux(19);
-    log(CLASS_MODULE, Info, "Time is?%s", Timing::humanize(leftTime, &timeAux));
+    log(CLASS_MODULE, Info, "Time (fs):%s", Timing::humanize(leftTime, &timeAux));
     getBot()->setActorsTime(leftTime);
 
     log(CLASS_MODULE, Info, "Load time (server)");
     // sync real date / time on clock, block if a single run is requested
     bool freezeTime = oneRun;
     bool clockSyncd = getClockSync()->syncClock(freezeTime, DEFAULT_CLOCK_SYNC_ATTEMPTS);
-    log(CLASS_MODULE, Info, "Time is:%s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
+    log(CLASS_MODULE, Info, "Time (server):%s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
     if (!clockSyncd) {
       Buffer b(ERR_BUFFER_LENGTH);
       b.fill("Sync clock KO(%d)", clockSyncd);
@@ -385,11 +387,16 @@ public:
 
     pushLogs();
 
-    log(CLASS_MODULE, Debug, "Letting user interrupt...");
-    bool i = sleepInterruptable(now(), SLEEP_PERIOD_UPON_BOOT_SECS);
-    if (i) {
-      Buffer b("Interrupted");
-      return StartupStatus(ModuleStartupPropertiesCodeSuccess, ConfigureMode, b);
+    if (getSettings()->getWaitOnBoot()) {
+      log(CLASS_MODULE, Debug, "Wait on boot");
+      bool i = sleepInterruptable(now(), SLEEP_PERIOD_UPON_BOOT_SECS);
+      if (i) {
+        Buffer b("Interrupted");
+        return StartupStatus(ModuleStartupPropertiesCodeSuccess, ConfigureMode, b);
+      } else {
+        Buffer b("OK");
+        return StartupStatus(ModuleStartupPropertiesCodeSuccess, RunMode, b);
+      }
     } else {
       Buffer b("OK");
       return StartupStatus(ModuleStartupPropertiesCodeSuccess, RunMode, b);
@@ -721,18 +728,6 @@ public:
     }
   }
 
-public:
-  void configureMode() {
-    cycleConfigureMode();
-  }
-
-public:
-  void runMode() {
-    preCycleRunMode();
-    pushLogs();
-    cycleBotRunMode();
-  }
-
 private:
   bool oneRunModeSafe() {
     return (oneRunMode == NULL ? false : oneRunMode());
@@ -770,7 +765,11 @@ public:
     switch (getBot()->getMode()) {
       case (RunMode):
         log(CLASS_MODULE, Info, "#LOOP(%s)", STRINGIFY(PROJ_VERSION));
-        runMode();
+
+        preCycleRunMode();
+        pushLogs();
+        cycleBotRunMode();
+
         log(CLASS_MODULE, Info, "#ENDLOOP");
         pushLogs();
         log(CLASS_MODULE, Info, "Storing actors...");
@@ -799,7 +798,7 @@ public:
         }
         break;
       case (ConfigureMode):
-        configureMode();
+        cycleConfigureMode();
         sleepInterruptable(cycleBegin, PERIOD_CONFIGURE_SEC);
         break;
       default:

@@ -295,6 +295,10 @@ public:
     return getDebugFlag('D', true);
   }
 
+  bool getWaitOnBoot() {
+    return getDebugFlag('W', true);
+  }
+
   const char *getSsid() {
     return ssid->getBuffer();
   }
