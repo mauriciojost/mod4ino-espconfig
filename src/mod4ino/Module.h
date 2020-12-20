@@ -37,6 +37,7 @@
 
 #define LOG_CAPACITY_THRESHOLD 0.8
 #define LOG_PLOG_REPORT_LENGTH 32
+#define LOGS_PUSH_CONF_COUNT 10
 
 enum ModuleStartupPropertiesCode {
   ModuleStartupPropertiesCodeSuccess = 0,
@@ -763,43 +764,50 @@ public:
   void loop() {
     time_t cycleBegin = now();
     switch (getBot()->getMode()) {
-      case (RunMode):
-        log(CLASS_MODULE, Info, "#LOOP(%s)", STRINGIFY(PROJ_VERSION));
+      case (RunMode): {
+          log(CLASS_MODULE, Info, "#LOOP(%s)", STRINGIFY(PROJ_VERSION));
 
-        preCycleRunMode();
-        pushLogs();
-        cycleBotRunMode();
+          preCycleRunMode();
+          pushLogs();
+          cycleBotRunMode();
 
-        log(CLASS_MODULE, Info, "#ENDLOOP");
-        pushLogs();
-        log(CLASS_MODULE, Info, "Storing actors...");
-        getPropSync()->fsStoreActorsProps(); // store credentials
-        pushLogs();
-        if (getBot()->getMode() != RunMode) {
-          log(CLASS_MODULE, Debug, "No longer run mode!");
-        } else if (oneRunModeSafe()) {
-          // before finishing store in the server the last status of all actors
-          // this includes the timing of the clock, that has progressed
-          // and will allow the next run to start from where we left off
-          log(CLASS_MODULE, Info, "Push(1run)");
-          // push properties to the server (with new props and new clock blocked timing)
-          getPropSync()->pushActors(true);
-          time_t s = durationToDeepSleep();
-          log(CLASS_MODULE, Info, "DS:%lu", (unsigned long)s);
+          log(CLASS_MODULE, Info, "#ENDLOOP");
           pushLogs();
-          updateIfMust();
-          deepSleepNotInterruptable(cycleBegin, s);
-        } else {
-          time_t s = getBatchTiming()->secsToMatch(MAX_BATCH_PERIOD_SECS);
-          log(CLASS_MODULE, Fine, "LS:%lu", (unsigned long)s);
+          log(CLASS_MODULE, Info, "Storing actors...");
+          getPropSync()->fsStoreActorsProps(); // store credentials
           pushLogs();
-          updateIfMust();
-          sleepInterruptable(cycleBegin, s);
+          if (getBot()->getMode() != RunMode) {
+            log(CLASS_MODULE, Debug, "No longer run mode!");
+          } else if (oneRunModeSafe()) {
+            // before finishing store in the server the last status of all actors
+            // this includes the timing of the clock, that has progressed
+            // and will allow the next run to start from where we left off
+            log(CLASS_MODULE, Info, "Push(1run)");
+            // push properties to the server (with new props and new clock blocked timing)
+            getPropSync()->pushActors(true);
+            time_t s = durationToDeepSleep();
+            log(CLASS_MODULE, Info, "DS:%lu", (unsigned long)s);
+            pushLogs();
+            updateIfMust();
+            deepSleepNotInterruptable(cycleBegin, s);
+          } else {
+            time_t s = getBatchTiming()->secsToMatch(MAX_BATCH_PERIOD_SECS);
+            log(CLASS_MODULE, Fine, "LS:%lu", (unsigned long)s);
+            pushLogs();
+            updateIfMust();
+            sleepInterruptable(cycleBegin, s);
+          }
         }
         break;
-      case (ConfigureMode):
-        cycleConfigureMode();
-        sleepInterruptable(cycleBegin, PERIOD_CONFIGURE_SEC);
+      case (ConfigureMode): {
+          static int confCnt = 0;
+          confCnt++;
+          cycleConfigureMode();
+          if (confCnt % LOGS_PUSH_CONF_COUNT == 0) {
+            pushLogs();
+          }
+          sleepInterruptable(cycleBegin, PERIOD_CONFIGURE_SEC);
+        }
         break;
       default:
         break;
