@@ -55,8 +55,8 @@ enum SettingsProps {
   SettingsUpdateFreqProp,   // frequency of upgrade
   SettingsBatchFreqProp,    // frequency of batch runs for all actors
 #ifdef INSECURE
-  SettingsCmdFreqProp,      // frequency of execution of command
-  SettingsCmdLineProp,      // command line to execute
+  SettingsCmdsFreqProp,     // frequency of execution of commands
+  SettingsCmdsProp,         // commands to execute ath the given frequency
 #endif // INSECURE
   SettingsPropsDelimiter    // amount of properties
 };
@@ -208,10 +208,10 @@ public:
       case (SettingsBatchFreqProp):
         return ADVANCED_PROP_PREFIX "bfreq";
 #ifdef INSECURE
-      case (SettingsCmdFreqProp):
-        return ADVANCED_PROP_PREFIX "cmdfreq";
-      case (SettingsCmdLineProp):
-        return ADVANCED_PROP_PREFIX "cmd";
+      case (SettingsCmdsFreqProp):
+        return ADVANCED_PROP_PREFIX "cmdsfreq";
+      case (SettingsCmdsProp):
+        return ADVANCED_PROP_PREFIX "cmds";
 #endif // INSECURE
       default:
         return "";
@@ -254,10 +254,10 @@ public:
         setPropTiming(m, targetValue, actualValue, batchTiming);
         break;
 #ifdef INSECURE
-      case (SettingsCmdFreqProp):
+      case (SettingsCmdsFreqProp):
         setPropTiming(m, targetValue, actualValue, cmdTiming);
         break;
-      case (SettingsCmdLineProp):
+      case (SettingsCmdsProp):
         setPropValue(m, targetValue, actualValue, cmdLine);
         break;
 #endif // INSECURE
