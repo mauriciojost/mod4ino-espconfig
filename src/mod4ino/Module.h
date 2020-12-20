@@ -334,16 +334,16 @@ private:
 public:
   StartupStatus startupProperties() {
 
+    log(CLASS_MODULE, Info, "Load props (fs)");
     loadFsProps();
 
-    log(CLASS_MODULE, Info, "Load props (server)");
     bool oneRun = oneRunModeSafe();
     PropSyncStatusCode serSyncd = PropSyncStatusCodeUnknown;
     if (oneRun) {
-      log(CLASS_MODULE, Info, "Pull");
+      log(CLASS_MODULE, Info, "Pull props (server)");
       serSyncd = getPropSync()->pullActors(); // only pull, push is postponed
     } else {
-      log(CLASS_MODULE, Info, "Pull & push");
+      log(CLASS_MODULE, Info, "Pull&push props (server)");
       serSyncd = getPropSync()->pullPushActors(false); // sync properties from the server
     }
 
@@ -352,23 +352,25 @@ public:
       b.fill("Prop sync KO(%d:%s)", serSyncd, getPropSync()->statusDescription(serSyncd));
       return failed(b, ModuleStartupPropertiesCodePropertiesSyncFailure);
     } else {
+      log(CLASS_MODULE, Info, "Store props (fs)");
       propSync->fsStoreActorsProps(); // store credentials
     }
 
     if (description != NULL) {
-      log(CLASS_MODULE, Info, "Push description");
+      log(CLASS_MODULE, Info, "Push descr.");
       getPropSync()->pushDescription(description);
     } else {
-      log(CLASS_MODULE, Fine, "Skip push description");
+      log(CLASS_MODULE, Fine, "Skip push descr.");
     }
 
+    log(CLASS_MODULE, Info, "Load time (fs)");
     time_t leftTime = getBot()->getClock()->currentTime();
 
     Buffer timeAux(19);
     log(CLASS_MODULE, Info, "Time is?%s", Timing::humanize(leftTime, &timeAux));
     getBot()->setActorsTime(leftTime);
 
-    log(CLASS_MODULE, Info, "Clock sync");
+    log(CLASS_MODULE, Info, "Load time (server)");
     // sync real date / time on clock, block if a single run is requested
     bool freezeTime = oneRun;
     bool clockSyncd = getClockSync()->syncClock(freezeTime, DEFAULT_CLOCK_SYNC_ATTEMPTS);
