@@ -704,7 +704,6 @@ public:
     Array<Actor *> *actors = bot->getActors();
     for (unsigned int i = 0; i < actors->size(); i++) {
       const char *aname = actors->get(i)->getName();
-      log(CLASS_MODULE, Info, "# '%s'", aname);
       getProps(aname);
     }
   }
@@ -714,8 +713,8 @@ public:
     Array<Actor *> *actors = bot->getActors();
     for (unsigned int i = 0; i < actors->size(); i++) {
       Actor *actor = actors->get(i);
-      log(CLASS_MODULE, Info, "# '%s'", actor->getName());
       if (actorN == NULL || strcmp(actor->getName(), actorN) == 0) {
+        log(CLASS_MODULE, Info, "# '%s'", actor->getName());
         for (int p = 0; p < actor->getNroProps(); p++) {
           const char *propName = actor->getPropName(p);
           if (propName[0] == SENSITIVE_PROP_PREFIX[0]) { // sensitive
