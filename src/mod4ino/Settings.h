@@ -83,7 +83,6 @@ private:
 #endif // INSECURE
   Metadata *md;
   Timing *batchTiming;
-  void (*update)(const char *projectId, const char *targetVersion, const char *currentVersion);
   PropSync *propSync;
 
 public:
@@ -125,7 +124,6 @@ public:
 
     target = new Buffer(TARGET_BUFFER_SIZE);
     target->load(LATEST_UPDATES_CODE);
-    update = NULL;
     propSync = NULL;
   }
 
@@ -151,37 +149,13 @@ public:
     return Act("");
   }
 
-
-  void updateIfMust() {
-    const char *currVersion = STRINGIFY(PROJ_VERSION);
-    if (updateScheduled) {
-      if (!target->equals(SKIP_UPDATES_CODE)) {
-        log(CLASS_SETTINGS, Warn, "Update:'%s'->'%s'", currVersion, target->getBuffer());
-        if (update != NULL) {
-          PropSyncStatusCode st = propSync->pushActors(true); // push properties to the server
-          if (!propSync->isFailure(st)) {
-            update(STRINGIFY(PROJECT_ID), target->getBuffer(), currVersion); // update
-            updateScheduled = false; // in case update failed, forget the attempt
-          } else {
-            log(CLASS_SETTINGS, Warn, "Update skipped(%d)", (int)st);
-          }
-        } else {
-          log(CLASS_SETTINGS, Warn, "No init.");
-        }
-      }
-    }
-    
-  }
-
   void setup(
     Module *m,
-    void (*u)(const char *proj, const char *targetVersion, const char *currentVersion),
     PropSync *ps
   ) {
 #ifdef INSECURE
     mod = m;
 #endif // INSECURE
-    update = u;
     propSync = ps;
   }
 
@@ -349,6 +323,18 @@ public:
 
   Timing* getBatchTiming() {
     return batchTiming;
+  }
+
+  Buffer* getTarget() {
+    return target;
+  }
+
+  bool isUpdateScheduled() {
+    return updateScheduled;
+  }
+
+  bool setUpdateScheduled(bool b) {
+    updateScheduled = b;
   }
 
 };

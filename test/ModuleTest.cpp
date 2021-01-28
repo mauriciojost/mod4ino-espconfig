@@ -160,8 +160,8 @@ void testArchitecture() {
   log(CLASS_MAIN, Debug, "testArchitecture()");
 }
 
-void updateFirmware(const char *p, const char *d, const char* c) {
-  log(CLASS_MAIN, Debug, "updateFirmware(project=%s, target=%s, current=%s)", p, d, c);
+void updateFirmware(const char *u, const char *c) {
+  log(CLASS_MAIN, Debug, "updateFirmware(url=%s, current=%s)", u, c);
 }
 
 bool sleepInterruptable(time_t cycleBegin, time_t periodSecs) {

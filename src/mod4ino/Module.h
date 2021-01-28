@@ -39,6 +39,11 @@
 #define LOG_PLOG_REPORT_LENGTH 32
 #define LOGS_PUSH_CONF_COUNT 10
 
+// convention for firmware file name: firmware-<version>.<platform>.bin
+// to replace: base + project + version + platform
+#define FIRMWARE_UPDATE_URL MAIN4INOSERVER_API_HOST_BASE "/api/v1/session/%s/devices/%s/firmware/firmwares/%s/%s/content?version=%s"
+
+
 enum ModuleStartupPropertiesCode {
   ModuleStartupPropertiesCodeSuccess = 0,
   ModuleStartupPropertiesCodeSkipped,
@@ -117,7 +122,7 @@ private:
   void (*test)();
 
   // Firmware update.
-  void (*update)(const char *project, const char *targetVersion, const char *currentVersion);
+  void (*update)(const char *url, const char *currentVersion);
 
   // Retrieve the login for the main4ino API.
   const char *(*apiDeviceLogin)();
@@ -140,7 +145,6 @@ private:
   bool inDebugMode();
   void setupSettings();
   Timing* getBatchTiming();
-  void updateIfMust();
   void setSsid(const char* c);
   const char* getSsid();
   void setPass(const char* c);
@@ -238,6 +242,25 @@ public: bool pushLogs() {
 
   }
 
+public: void updateFirmwareFromMain4ino(const char* url, const char *project, const char* platform, const char *targetVersion, const char* currentVersion) {
+#ifndef UPDATE_FIRMWARE_MAIN4INO_DISABLED
+  Buffer aux(UPDATE_FIRMWARE_URL_MAX_LENGTH);
+  aux.fill(url, getPropSync()->getSession(), getPropSync()->getLogin(), project, platform, targetVersion);
+  update(aux.getBuffer(), currentVersion);
+#else // UPDATE_FIRMWARE_MAIN4INO_DISABLED
+  log(CLASS_MODULE, Warn, "Update disabled");
+#endif // UPDATE_FIRMWARE_MAIN4INO_DISABLED
+}
+
+public: void updateToProjectVersion(const char* project, const char *targetVersion) {
+  bool c = initWifi();
+  if (c) {
+    updateFirmwareFromMain4ino(FIRMWARE_UPDATE_URL, project, STRINGIFY(PLATFORM_ID), targetVersion, STRINGIFY(PROJECT_VERSION));
+  } else {
+    log(CLASS_MODULE, Error, "Could not update");
+  }
+}
+
 public:
   /**
    * Setup this module and the core components and the architecture.
@@ -260,7 +283,7 @@ public:
              CmdExecStatus (*commandPlatformFunc)(Cmd *cmd),
              std::function<CmdExecStatus (Cmd* cmd)> commandProjectExtendedFunc,
              void (*infoFunc)(),
-             void (*updateFunc)(const char* project, const char *targetVersion, const char *currentVersion),
+             void (*updateFunc)(const char* url, const char *currentVersion),
              void (*testFunc)(),
              const char *(*apiDeviceLoginFunc)(),
              const char *(*apiDevicePassFunc)(),
@@ -489,14 +512,18 @@ private:
       test();
       return Executed;
     } else if (c->matches("upda", "update firmware", 1, "tgt-version")) {
-      update(STRINGIFY(PROJECT_ID), c->getAsLastArg(0), STRINGIFY(PROJ_VERSION));
+      updateToProjectVersion(STRINGIFY(PROJECT_ID), c->getAsLastArg(0));
       return Executed;
 #ifdef INSECURE
     } else if (c->matches("updc", "update firmware cross project", 2, "tgt-project", "tgt-version")) {
       Buffer bf(32);
       const char *project = c->getArg(0, &bf);
       const char *version = c->getAsLastArg(1);
-      update(project, version, STRINGIFY(PROJ_VERSION));
+      updateToProjectVersion(project, version);
+      return Executed;
+    } else if (c->matches("updd", "update firmware (development mode)", 1, "url")) {
+      // example: http://10.0.0.11:8080/a.firmware
+      update(c->getAsLastArg(0), STRINGIFY(PROJECT_VERSION));
       return Executed;
 #endif // INSECURE
     } else if (c->matches("clea", "clear device", 0)) {
@@ -812,6 +839,26 @@ public:
         break;
     }
   }
+
+private: void updateIfMust() {
+    if (getSettings()->isUpdateScheduled()) {
+      if (!getSettings()->getTarget()->equals(SKIP_UPDATES_CODE)) {
+        log(CLASS_SETTINGS, Warn, "Update:'%s'->'%s'", STRINGIFY(PROJ_VERSION), getSettings()->getTarget()->getBuffer());
+        if (update != NULL) {
+          PropSyncStatusCode st = getPropSync()->pushActors(true); // push properties to the server
+          if (!getPropSync()->isFailure(st)) {
+            updateToProjectVersion(STRINGIFY(PROJECT_ID), getSettings()->getTarget()->getBuffer()); // update
+            getSettings()->setUpdateScheduled(false); // in case update failed, forget the attempt
+          } else {
+            log(CLASS_MODULE, Warn, "Update skipped(%d)", (int)st);
+          }
+        } else {
+          log(CLASS_MODULE, Warn, "No init.");
+        }
+      }
+    }
+  }
+
 };
 
 #endif // MODULE_INC

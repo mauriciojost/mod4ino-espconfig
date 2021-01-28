@@ -5,7 +5,7 @@ bool Module::inDebugMode() {
 }
 
 void Module::setupSettings() {
-  settings->setup(this, update, propSync);
+  settings->setup(this, propSync);
 }
 
 void Module::setSsid(const char* c) {
@@ -40,11 +40,7 @@ const char* Module::getPassBackup() {
   return settings->getPassBackup();
 }
 
-
 Timing* Module::getBatchTiming() {
   return getSettings()->getBatchTiming();
 }
 
-void Module::updateIfMust() {
-  getSettings()->updateIfMust();
-}
