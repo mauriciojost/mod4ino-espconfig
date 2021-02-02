@@ -84,7 +84,6 @@ private:
   Settings *settings;
   Device *device;
   SerBot *bot;
-  const char *description;
 
   // Initialization of wifi.
   bool (*initWifi)();
@@ -214,7 +213,6 @@ public:
     oneRunMode = NULL;
     getLogBuffer = NULL;
 
-    description = NULL;
   }
 
 public: bool pushLogs() {
@@ -331,13 +329,6 @@ private:
      return StartupStatus(code, ConfigureMode, msg);
   }
 
-public:
-  void setDescription(const char *d) {
-    // Example:
-    // {"version":"1.0.0","json":[{"patterns": ["^.*.freq$"], "descriptions: ["Description here."],"examples": ["value -> Explanation"]}],
-    description = d;
-  }
-
 private:
   void loadFsProps() {
     log(CLASS_MODULE, Info, "Load props (fs)");
@@ -385,13 +376,6 @@ public:
     } else {
       log(CLASS_MODULE, Info, "Store props (fs)");
       propSync->fsStoreActorsProps(); // store credentials
-    }
-
-    if (description != NULL) {
-      log(CLASS_MODULE, Info, "Push descr.");
-      getPropSync()->pushDescription(description);
-    } else {
-      log(CLASS_MODULE, Fine, "Skip push descr.");
     }
 
     log(CLASS_MODULE, Info, "Load time (fs)");
