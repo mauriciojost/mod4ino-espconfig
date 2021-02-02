@@ -265,8 +265,9 @@ public:
     return d;
   }
 
-  bool getDebug() {
-    return getDebugFlag('D', true);
+  // used from letter P - Z (A - O reserved for the user)
+  bool pushLogsEnabled() {
+    return getDebugFlag('P', false);
   }
 
   bool getWaitOnBoot() {

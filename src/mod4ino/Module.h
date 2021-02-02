@@ -146,7 +146,7 @@ private:
   // Methods depending on Settings definition (to break cyclic dependency)
   void initSettings();
   void initDevice();
-  bool inDebugMode();
+
   void setupSettings();
   Timing* getBatchTiming();
   void setSsid(const char* c);
@@ -222,8 +222,9 @@ public: bool pushLogs() {
     if (getLogBuffer == NULL || getLogBuffer() == NULL) 
       return true;
 
-    if (!inDebugMode())
+    if (!getSettings()->pushLogsEnabled()) {
       return true;
+    }
 
     sizet len = getLogBuffer()->getLength();
     if (len > getLogBuffer()->getEffCapacity() * LOG_CAPACITY_THRESHOLD) {
@@ -795,14 +796,13 @@ public:
     time_t cycleBegin = now();
     switch (getBot()->getMode()) {
       case (RunMode): {
-          log(CLASS_MODULE, Info, "#LOOP(%s)", STRINGIFY(PROJ_VERSION));
-
+          log(CLASS_MODULE, Info, "#LOOP");
           preCycleRunMode();
           pushLogs();
           cycleBotRunMode();
-
           log(CLASS_MODULE, Info, "#ENDLOOP");
           pushLogs();
+
           log(CLASS_MODULE, Info, "Storing actors...");
           getPropSync()->fsStoreActorsProps(); // store credentials
           pushLogs();

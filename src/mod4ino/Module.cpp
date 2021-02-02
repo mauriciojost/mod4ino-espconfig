@@ -1,9 +1,5 @@
 #include <mod4ino/Module.h>
 
-bool Module::inDebugMode() {
-  return settings->getDebug();
-}
-
 void Module::setupSettings() {
   settings->setup(this, propSync);
 }
