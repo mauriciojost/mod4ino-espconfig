@@ -575,6 +575,9 @@ private:
       log(CLASS_MODULE, User, "###");
       return Executed;
 #endif // INSECURE
+    } else if (c->matches("nop", "perform no operation", 0)) {
+      log(CLASS_MODULE, User, "nop!");
+      return Executed;
     } else if (c->matches("load", "load all actors properties from FS", 0)) {
       propSync->fsLoadActorsProps(); // load mainly credentials already set
       log(CLASS_MODULE, Info, "Properties loaded from local copy");
