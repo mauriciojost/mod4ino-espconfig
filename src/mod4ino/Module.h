@@ -247,6 +247,9 @@ public: bool pushLogs() {
 
 public: void updateFirmwareFromMain4ino(const char* url, const char *project, const char* platform, const char *targetVersion, const char* currentVersion) {
 #ifndef UPDATE_FIRMWARE_MAIN4INO_DISABLED
+  log(CLASS_MODULE, Warn, "Update: %s ->", currentVersion);
+  log(CLASS_MODULE, Warn, "Update: -> %s", targetVersion);
+  pushLogs();
   Buffer aux(UPDATE_FIRMWARE_URL_MAX_LENGTH);
   aux.fill(url, getPropSync()->getSession(), getPropSync()->getLogin(), project, platform, targetVersion);
   update(aux.getBuffer(), currentVersion);
@@ -512,6 +515,9 @@ private:
       return Executed;
     } else if (c->matches("updd", "update firmware (development mode)", 1, "url")) {
       // example: http://10.0.0.11:8080/a.firmware
+      log(CLASS_MODULE, Warn, "CUpdate: %s ->", STRINGIFY(PROJECT_VERSION));
+      log(CLASS_MODULE, Warn, "CUpdate: -> %s", c->getAsLastArg(0));
+      pushLogs();
       update(c->getAsLastArg(0), STRINGIFY(PROJECT_VERSION));
       return Executed;
 #endif // INSECURE
@@ -619,7 +625,8 @@ private:
 private:
   void cycleBotRunMode() {
     time_t t = getClock()->currentTime();
-    log(CLASS_MODULE, Info, "CYCLE: %04d-%02d-%02d %02d:%02d:%02d", GET_YEARS(t), GET_MONTHS(t), GET_DAYS(t), GET_HOURS(t), GET_MINUTES(t), GET_SECONDS(t));
+    log(CLASS_MODULE, Info, "CYCLE: %04d-%02d-%02d", GET_YEARS(t), GET_MONTHS(t), GET_DAYS(t));
+    log(CLASS_MODULE, Info, "...%02d:%02d:%02d", GET_HOURS(t), GET_MINUTES(t), GET_SECONDS(t));
 
     for (unsigned int aIndex = 0; aIndex < actors->size(); aIndex++) {
       Actor* actor = actors->get(aIndex);
