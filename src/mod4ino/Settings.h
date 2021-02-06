@@ -334,7 +334,7 @@ public:
     return updateScheduled;
   }
 
-  bool setUpdateScheduled(bool b) {
+  void setUpdateScheduled(bool b) {
     updateScheduled = b;
   }
 
