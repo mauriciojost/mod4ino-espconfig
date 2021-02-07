@@ -261,7 +261,7 @@ public: void updateFirmwareFromMain4ino(const char* url, const char *project, co
 public: void updateToProjectVersion(const char* project, const char *targetVersion) {
   bool c = initWifi();
   if (c) {
-    updateFirmwareFromMain4ino(FIRMWARE_UPDATE_URL, project, STRINGIFY(PLATFORM_ID), targetVersion, STRINGIFY(PROJECT_VERSION));
+    updateFirmwareFromMain4ino(FIRMWARE_UPDATE_URL, project, STRINGIFY(PLATFORM_ID), targetVersion, STRINGIFY(PROJ_VERSION));
   } else {
     log(CLASS_MODULE, Error, "Could not update");
   }
@@ -515,10 +515,10 @@ private:
       return Executed;
     } else if (c->matches("updd", "update firmware (development mode)", 1, "url")) {
       // example: http://10.0.0.11:8080/a.firmware
-      log(CLASS_MODULE, Warn, "CUpdate: %s ->", STRINGIFY(PROJECT_VERSION));
+      log(CLASS_MODULE, Warn, "CUpdate: %s ->", STRINGIFY(PROJ_VERSION));
       log(CLASS_MODULE, Warn, "CUpdate: -> %s", c->getAsLastArg(0));
       pushLogs();
-      update(c->getAsLastArg(0), STRINGIFY(PROJECT_VERSION));
+      update(c->getAsLastArg(0), STRINGIFY(PROJ_VERSION));
       return Executed;
 #endif // INSECURE
     } else if (c->matches("clea", "clear device", 0)) {
