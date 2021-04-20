@@ -362,15 +362,9 @@ public:
     log(CLASS_MODULE, Info, "Load props (fs)");
     loadFsProps();
 
-    bool oneRun = oneRunModeSafe();
     PropSyncStatusCode serSyncd = PropSyncStatusCodeUnknown;
-    if (oneRun) {
-      log(CLASS_MODULE, Info, "Pull props (server)");
-      serSyncd = getPropSync()->pullActors(); // only pull, push is postponed
-    } else {
-      log(CLASS_MODULE, Info, "Pull&push props (server)");
-      serSyncd = getPropSync()->pullPushActors(false); // sync properties from the server
-    }
+    log(CLASS_MODULE, Info, "Pull&push props (server)");
+    serSyncd = getPropSync()->pullPushActors(false); // sync properties from the server
 
     if (getPropSync()->isFailure(serSyncd)) {
       Buffer b(ERR_BUFFER_LENGTH);
@@ -390,7 +384,7 @@ public:
 
     log(CLASS_MODULE, Info, "Load time (server)");
     // sync real date / time on clock, block if a single run is requested
-    bool freezeTime = oneRun;
+    bool freezeTime = oneRunModeSafe();
     bool clockSyncd = getClockSync()->syncClock(freezeTime, DEFAULT_CLOCK_SYNC_ATTEMPTS);
     log(CLASS_MODULE, Info, "Time (server):%s", Timing::humanize(getBot()->getClock()->currentTime(), &timeAux));
     if (!clockSyncd) {
