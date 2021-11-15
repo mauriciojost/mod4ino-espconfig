@@ -359,6 +359,15 @@ private:
 public:
   StartupStatus startupProperties() {
 
+    if (getSettings()->getWaitOnBoot()) { // Allow to interrupt before any sync
+      log(CLASS_MODULE, Debug, "Wait on boot");
+      bool i = sleepInterruptable(now(), SLEEP_PERIOD_UPON_BOOT_SECS);
+      if (i) {
+        Buffer b("PreSync interrupted");
+        return StartupStatus(ModuleStartupPropertiesCodeSuccess, ConfigureMode, b);
+      }
+    }
+
     log(CLASS_MODULE, Info, "Load props (fs)");
     loadFsProps();
 
@@ -401,14 +410,14 @@ public:
       log(CLASS_MODULE, Debug, "Wait on boot");
       bool i = sleepInterruptable(now(), SLEEP_PERIOD_UPON_BOOT_SECS);
       if (i) {
-        Buffer b("Interrupted");
+        Buffer b("PostSync interrupted");
         return StartupStatus(ModuleStartupPropertiesCodeSuccess, ConfigureMode, b);
       } else {
-        Buffer b("OK");
+        Buffer b("OK (waitonboot)");
         return StartupStatus(ModuleStartupPropertiesCodeSuccess, RunMode, b);
       }
     } else {
-      Buffer b("OK");
+      Buffer b("OK (straight)");
       return StartupStatus(ModuleStartupPropertiesCodeSuccess, RunMode, b);
     }
 
