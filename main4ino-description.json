@@ -1,0 +1,73 @@
+{
+  "json" : [
+    {
+      "patterns" : ["^mod4ino.+cmds$"],
+      "descriptions" : ["Semi-colon separated list of commands to be executed at a given frequency."],
+      "examples" : ["info;nop"]
+    },
+    {
+      "patterns" : ["^mod4ino.+cmdsfreq$"],
+      "descriptions" : ["Frequency at which the custom list of commands will be executed."],
+      "examples" : [
+        "never  -> Never",
+        "~10s  -> Every 10 seconds",
+        "~30m  -> Every 30 minutes",
+        "~30mf6t18 -> Every 30 minutes from 06h until 18h included",
+        "@08h00   -> Everyday at 8h",
+        "[SMtwtfs]@15h00 -> At 15h00 on Sundays and Mondays",
+        "[smTWtfs]~30mf6t18 -> Every 30 minutes from 06h until 18h on Tuesdays and Wednesdays",
+        "oneoff    -> Once and go back to previous configuration"
+      ]
+    },
+    {
+      "patterns" : ["^mod4ino.+ufreq$"],
+      "descriptions" : ["Frequency at which the device will get upgraded to the target firmware."],
+      "examples" : [
+        "never     -> Never",
+        "~10s  -> Every 10 seconds",
+        "~30m  -> Every 30 minutes",
+        "~30mf6t18 -> Every 30 minutes from 06h until 18h included",
+        "@08h00   -> Everyday at 8h",
+        "[SMtwtfs]@15h00 -> At 15h00 on Sundays and Mondays",
+        "[smTWtfs]~30mf6t18 -> Every 30 minutes from 06h until 18h on Tuesdays and Wednesdays",
+        "oneoff    -> Once and go back to previous configuration"
+      ]
+    },
+    {
+      "patterns" : ["^mod4ino.~logo$"],
+      "descriptions" : ["Log options with format: CCD. where CC is the class being addressed (whildcard possible is ?), and D is the debug level (one among F,D,I,W,E,U)."],
+      "examples" : ["??D. -> All classes to Debug level", "??F. -> All classes to Fine level", "TIE.??F. -> Class TI to Error level, the rest to Fine level"]
+    },
+    {
+      "patterns" : ["^mod4ino.+utarget$"],
+      "descriptions" : ["Target firmware version to upgrade to with at the given frequency."],
+      "examples" : ["SKIP -> Skip the upgrade", "LATEST -> Upgrade to the latest version available (even unstable)", "LATEST_STABLE -> Upgrade to the latest stable version available", "1.0.0 -> Upgrade to a very specific version"]
+    },
+    {
+      "patterns" : ["^mod4ino.+bfreq$"],
+      "descriptions" : ["Frequency at which the device perform a batch run."],
+      "examples" : [
+        "never     -> Never",
+        "~10s  -> Every 10 seconds",
+        "~30m  -> Every 30 minutes",
+        "~30mf6t18 -> Every 30 minutes from 06h until 18h included",
+        "@08h00   -> Everyday at 8h",
+        "[SMtwtfs]@15h00 -> At 15h00 on Sundays and Mondays",
+        "[smTWtfs]~30mf6t18 -> Every 30 minutes from 06h until 18h on Tuesdays and Wednesdays",
+        "oneoff    -> Once and go back to previous configuration"
+      ]
+    },
+    {
+      "patterns" : ["^mod4ino.+mperiodms$"],
+      "descriptions" : ["User response time in ms. The lower this value the more power consumption."],
+      "examples" : ["1000", "5000", "10000"]
+    },
+    {
+      "patterns" : ["^mod4ino.~debug$"],
+      "descriptions" : ["One-char list of flag for debug (upper case enables feature, lower case disables it): D debug mode, P push logs, W wait for telnet on boot, T telnet"],
+      "examples" : ["DP -> Debug and Push logs enabled", "Dp -> Debug enabled, but Push logs disabled"]
+    }
+  ]
+}
+
+
