@@ -47,6 +47,15 @@
 // to replace: base + project + version + platform
 #define FIRMWARE_UPDATE_URL MAIN4INOSERVER_API_HOST_BASE "/api/v1/session/%s/devices/%s/firmware/firmwares/%s/%s/content?version=%s"
 
+// The module aims at waking up every X amount of deep slept seconds.
+// Imagine that we aim at waking up every hour.
+// A deep sleep of 3600 seconds could result in 3550 seconds (HW RTC not perfectly tuned).
+// If the processing finishes in 1 second, we will be ready in second 3551, so next wakeup will
+// be in 9 seconds, resulting in 2 wake-ups instead of 1 wake-up.
+// To prevent that from happening we add a tunable fixed supplement.
+#ifndef DEEP_SLEEP_SUPPLEMENT_SECS
+#define DEEP_SLEEP_SUPPLEMENT_SECS 60
+#endif // DEEP_SLEEP_SUPPLEMENT_SECS
 
 enum ModuleStartupPropertiesCode {
   ModuleStartupPropertiesCodeSuccess = 0,
@@ -820,7 +829,7 @@ public:
             log(CLASS_MODULE, Info, "DS:%lu", (unsigned long)s);
             pushLogs();
             updateIfMust();
-            deepSleepNotInterruptable(cycleBegin, s);
+            deepSleepNotInterruptable(cycleBegin, s + DEEP_SLEEP_SUPPLEMENT_SECS);
           } else {
             time_t s = getBatchTiming()->secsToMatch(MAX_BATCH_PERIOD_SECS);
             log(CLASS_MODULE, Fine, "LS:%lu", (unsigned long)s);
