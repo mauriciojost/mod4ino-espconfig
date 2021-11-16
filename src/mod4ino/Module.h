@@ -606,7 +606,11 @@ private:
       return;
     }
 
-    log(CLASS_MODULE, Debug, "%.5s t%ld(+%ld)", actorName, t->getCurrentTime(), currentTime - t->getCurrentTime());
+    time_t at = t->getCurrentTime();
+    log(CLASS_MODULE, Debug, "%.5s t%ld(+%ld)", actorName, at, currentTime - at);
+    log(CLASS_MODULE, Fine, "%.5s %02d:%02d:%02d(+%ld)", actorName, GET_HOURS(at), GET_MINUTES(at), GET_SECONDS(at), currentTime - at);
+    log(CLASS_MODULE, Fine, "%.5s =%02d:%02d:%02d", actorName, GET_HOURS(currentTime), GET_MINUTES(currentTime), GET_SECONDS(currentTime));
+
     while (t->catchesUp(currentTime)) {
       Act act = actor->act(actor->getMetadata());
       if (!act.isEmpty()) {
