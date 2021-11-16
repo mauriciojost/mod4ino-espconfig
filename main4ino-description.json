@@ -35,7 +35,7 @@
     },
     {
       "patterns" : ["^mod4ino.~logo$"],
-      "descriptions" : ["Log options with format: CCD. where CC is the class being addressed (whildcard possible is ?), and D is the debug level (one among F,D,I,W,E,U)."],
+      "descriptions" : ["Log options. Format: CCD. where CC is the class matching expression (wildcard ?), and D is the debug level (one among F,D,I,W,E,U)."],
       "examples" : ["??D. -> All classes to Debug level", "??F. -> All classes to Fine level", "TIE.??F. -> Class TI to Error level, the rest to Fine level"]
     },
     {
