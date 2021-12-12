@@ -826,7 +826,7 @@ public:
             // push properties to the server (with new props and new clock blocked timing)
             getPropSync()->pushActors(true);
             time_t s = durationToDeepSleep();
-            log(CLASS_MODULE, Info, "DS:%lu", (unsigned long)s);
+            log(CLASS_MODULE, Info, "DS:%lu+%lu", (unsigned long)s, (unsigned long)DEEP_SLEEP_SUPPLEMENT_SECS);
             pushLogs();
             updateIfMust();
             deepSleepNotInterruptable(cycleBegin, s + DEEP_SLEEP_SUPPLEMENT_SECS);
