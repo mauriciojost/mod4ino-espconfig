@@ -94,6 +94,7 @@ private:
   Device *device;
   SerBot *bot;
 
+  // TODO: make all functions std::function and provide for each a setter so that setup dissapears (sooo many args... :( ) 
   // Initialization of wifi.
   std::function<bool ()> initWifi;
 
@@ -150,6 +151,8 @@ private:
 
   // Defines how to retrieve the buffer containing the logs to be pushed (if any)
   Buffer* (*getLogBuffer)();
+
+  std::function<void (Module* md)> firstSetupFunc;
    
   // Methods depending on Settings definition (to break cyclic dependency)
   void initSettings();
@@ -221,7 +224,7 @@ public:
     apiDevicePass = NULL;
     oneRunMode = NULL;
     getLogBuffer = NULL;
-
+    firstSetupFunc = NULL;
   }
 
 public: bool pushLogs() {
@@ -335,6 +338,11 @@ public:
     setupSettings();
   }
 
+public: 
+  void setFirstSetupFunc(std::function<void (Module* md)> f){
+    firstSetupFunc = f;
+  }
+
 private: 
   StartupStatus failed(Buffer msg, ModuleStartupPropertiesCode code) {
      log(CLASS_MODULE, Error, "Startup failed: %s", msg.getBuffer());
@@ -375,6 +383,10 @@ public:
         Buffer b("PreSync interrupted");
         return StartupStatus(ModuleStartupPropertiesCodeSuccess, ConfigureMode, b);
       }
+    }
+
+    if (firstSetupFunc != NULL) {
+      firstSetupFunc(this);
     }
 
     log(CLASS_MODULE, Info, "Load props (fs)");
