@@ -95,10 +95,10 @@ private:
   SerBot *bot;
 
   // Initialization of wifi.
-  bool (*initWifi)();
+  std::function<bool ()> initWifi;
 
   // Stop wifi.
-  void (*stopWifi)();
+  std::function<void ()> stopWifi;
 
   // Clear device function (remove filesystem, stacktraces, logs, etc...).
   void (*clearDevice)();
@@ -285,8 +285,8 @@ public:
   void setup(
              const char *project,
              const char *platform,
-             bool (*initWifiFunc)(),
-             void (*stopWifiFunc)(),
+             std::function<bool ()> initWifiFunc,
+             std::function<void ()> stopWifiFunc,
              HttpResponse (*httpMethodFunc)(HttpMethod m, const char *url, Stream *body, Table *headers, const char *fingerprint),
              void (*clearDeviceFunc)(),
              bool (*fileReadFunc)(const char *fname, Buffer *content),
