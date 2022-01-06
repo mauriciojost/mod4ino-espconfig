@@ -12,13 +12,15 @@
 
 const char *replyEmptyBody = "{}";
 ParamStream *response = new ParamStream(1024);
-std::function<void ()> nop = []() {};
 
 bool wifiConnected;
 int pullCount;
 
-void logLine(const char *msg, const char *clz, LogLevel l, bool newline) {
-}
+std::function<void ()> nop = []() {};
+std::function<bool ()> initWifiSimple = []() {return wifiConnected;};
+std::function<void ()> stopWifi = []() {};
+
+void logLine(const char *msg, const char *clz, LogLevel l, bool newline) {}
 
 void setUp(void) {
   wifiConnected = true;
@@ -42,12 +44,6 @@ unsigned long millis() {
   }
   return m - boot;
 }
-
-bool initWifiSimple() {
-  return wifiConnected;
-}
-
-void stopWifi() {}
 
 const char *apiDeviceLogin() {
   return "testdevice";
