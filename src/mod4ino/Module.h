@@ -385,12 +385,12 @@ public:
       }
     }
 
+    log(CLASS_MODULE, Info, "Load props (fs)");
+    loadFsProps();
+
     if (firstSetupFunc != NULL) {
       firstSetupFunc(this);
     }
-
-    log(CLASS_MODULE, Info, "Load props (fs)");
-    loadFsProps();
 
     PropSyncStatusCode serSyncd = PropSyncStatusCodeUnknown;
     log(CLASS_MODULE, Info, "Pull&push props (server)");
