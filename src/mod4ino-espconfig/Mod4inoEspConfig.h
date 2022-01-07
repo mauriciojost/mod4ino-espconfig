@@ -40,6 +40,7 @@ void saveParamCallback(Module* m){
 }
 
 std::function<void (const char* hostname, Module* md)> firstSetupArchitecture = [&](const char* hostname, Module* md) {
+  log(CLASS_ESPCONFIG, Info, "Started first setup");
 
   // https://github.com/tzapu/WiFiManager/blob/master/examples/Super/OnDemandConfigPortal/OnDemandConfigPortal.ino
   WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
