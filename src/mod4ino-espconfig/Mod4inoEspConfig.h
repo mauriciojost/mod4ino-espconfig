@@ -33,10 +33,10 @@ void saveParamCallback(Module* m){
       c++;
     }
   }
-  m->getModule()->getPropSync()->fsStoreActorsProps();
+  m->getPropSync()->fsStoreActorsProps();
 }
 
-std::function<void (const char* hostname, Module* md)> firstSetupArchitecture = [&](Module* md) {
+std::function<void (const char* hostname, Module* md)> firstSetupArchitecture = [&](const char* hostname, Module* md) {
 
   // https://github.com/tzapu/WiFiManager/blob/master/examples/Super/OnDemandConfigPortal/OnDemandConfigPortal.ino
   WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
