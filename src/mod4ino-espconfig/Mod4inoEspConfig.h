@@ -11,10 +11,13 @@
 #include <WiFiManager.h>
 WiFiManager wm;
 
+#define DELAY_MS_WIFI_STA 1000
+#define MAX_PARAM_SIZE 32
+#define CONFIG_PORTAL_TIMEOUT_SECS 120
+#define WIFI_STA_PASS "0123456789"
+
 // TODO
 // seems wifi pass and ssid are not needed anymore, could be completely removed
-// constants extraction (too many magic numbers)
-// move to primitives so that othe rprojects can use this
 // see how could add description + samples
 void saveParamCallback(Module* m){
   log(CLASS_ESPCONFIG, Debug, "[CALLBACK] saveParamCallback fired");
@@ -41,7 +44,7 @@ std::function<void (const char* hostname, Module* md)> firstSetupArchitecture = 
   // https://github.com/tzapu/WiFiManager/blob/master/examples/Super/OnDemandConfigPortal/OnDemandConfigPortal.ino
   WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
-  delay(1000);
+  delay(DELAY_MS_WIFI_STA);
 
   wm.debugPlatformInfo();
 
@@ -58,7 +61,7 @@ std::function<void (const char* hostname, Module* md)> firstSetupArchitecture = 
       const char *propName = actor->getPropName(p);
       actor->getPropValue(p, &contentAuxBuffer);
       log(CLASS_ESPCONFIG, Info, " '%s'='%s'", propName, contentAuxBuffer.getBuffer());
-      WiFiManagerParameter* pam = new WiFiManagerParameter(actor->getPropNameAlpha(p), actor->getPropNameAlpha(p), contentAuxBuffer.getBuffer(), 32);
+      WiFiManagerParameter* pam = new WiFiManagerParameter(actor->getPropNameAlpha(p), actor->getPropNameAlpha(p), contentAuxBuffer.getBuffer(), MAX_PARAM_SIZE);
       wm.addParameter(pam);
       c++;
     }
@@ -83,7 +86,7 @@ std::function<void (const char* hostname, Module* md)> firstSetupArchitecture = 
 
   //sets timeout until configuration portal gets turned off
   //useful to make it all retry or go to sleep in seconds
-  wm.setConfigPortalTimeout(120);
+  wm.setConfigPortalTimeout(CONFIG_PORTAL_TIMEOUT_SECS);
 
   // connect after portal save toggle
   wm.setSaveConnect(false); // do not connect, only save
@@ -91,7 +94,7 @@ std::function<void (const char* hostname, Module* md)> firstSetupArchitecture = 
   // This is sometimes necessary, it is still unknown when and why this is needed but it may solve some race condition or bug in esp SDK/lib
   // wm.setCleanConnect(true); // disconnect before connect, clean connect
 
-  if(!wm.autoConnect(hostname, "0123456789")) {
+  if(!wm.autoConnect(hostname, WIFI_STA_PASS)) {
     log(CLASS_ESPCONFIG, Warn, "Failed to connect and hit timeout");
   } else {
     //if you get here you have connected to the WiFi
