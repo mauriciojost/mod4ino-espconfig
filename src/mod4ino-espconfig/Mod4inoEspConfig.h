@@ -6,73 +6,106 @@
 #include <log4ino/Log.h>
 
 #include <main4ino/Actor.h>
+#include <main4ino/Queue.h>
 #include <mod4ino/Module.h>
 
 #include <WiFiManager.h>
-WiFiManager wm;
+WiFiManager wm(Serial);
 
-#define DELAY_MS_WIFI_STA 1000
-#define MAX_PARAM_SIZE 32
-#define CONFIG_PORTAL_TIMEOUT_SECS 120
-#define WIFI_STA_PASS "0123456789"
+#define DELAY_MS_WIFI_STA 2000
+#define MAX_PARAM_SIZE 16
+#define CONFIG_PORTAL_TIMEOUT_SECS 240
+#define WIFI_STA_PASS "main4ino"
+#define MAX_AMOUNT_OF_PROPS 64
+#define PROP_ID_LENGTH 3
 
-// TODO
-// seems wifi pass and ssid are not needed anymore, could be completely removed
-// see how could add description + samples
+bool propApplicable(const char* name) {
+  return name[0] != '~' && 
+    name[0] != '.' && 
+    name[0] != '_' && 
+    name[0] != '+';
+}
+
 void saveParamCallback(Module* m){
   log(CLASS_ESPCONFIG, Debug, "[CALLBACK] saveParamCallback fired");
-  // wm.stopConfigPortal();
   WiFiManagerParameter** params = wm.getParameters();
   Array<Actor *> *actors = m->getBot()->getActors();
   int c = 0;
   for (unsigned int i = 0; i < actors->size(); i++) {
     Actor *actor = actors->get(i);
-    Buffer contentAuxBuffer(64);
+    c++; // ignore actor name label prefix
+    c++; // ignore actor name label actor name
+    c++; // ignore actor name label suffix
+    log(CLASS_ESPCONFIG, Fine, "%s:", actor->getName());
     for (int p = 0; p < actor->getNroProps(); p++) {
       const char *propName = actor->getPropName(p);
-      actor->getPropValue(p, &contentAuxBuffer);
-      WiFiManagerParameter* pa = params[c];
-      log(CLASS_ESPCONFIG, Info, " '%s'='%s'", propName, pa->getValue());
-      c++;
+      if (propApplicable(propName)) {
+        WiFiManagerParameter* pa = params[c];
+        Buffer contentAuxBuffer(MAX_PARAM_SIZE);
+        log(CLASS_ESPCONFIG, Warn, " %s<-'%s'", propName, pa->getValue());
+        contentAuxBuffer.load(pa->getValue());
+        actor->setPropValue(p, &contentAuxBuffer);
+        c++;
+      }
     }
   }
-  m->getPropSync()->fsStoreActorsProps();
+  // wm.stopConfigPortal();
 }
 
-std::function<void (const char* hostname, Module* md)> firstSetupArchitecture = [&](const char* hostname, Module* md) {
+std::function<void (Module* md)> firstSetupArchitecture = [&](Module* md) {
+
   log(CLASS_ESPCONFIG, Info, "Started first setup");
 
   // https://github.com/tzapu/WiFiManager/blob/master/examples/Super/OnDemandConfigPortal/OnDemandConfigPortal.ino
   WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
+  // Reset WIFI settings systematically
+  // If this function is called, is because it's really needed
+  ESP.eraseConfig();
+  wm.resetSettings();
+  wm.erase();
+
   delay(DELAY_MS_WIFI_STA);
 
-  wm.debugPlatformInfo();
-
-  //reset settings - for testing
-  //wm.resetSettings();
-  //wm.erase();
-
   Array<Actor *> *actors = md->getBot()->getActors();
+  Queue<MAX_AMOUNT_OF_PROPS, PROP_ID_LENGTH> queue;
+  Buffer idBuffer(PROP_ID_LENGTH);
   int c = 0;
+  Buffer contentAuxBuffer(MAX_PARAM_SIZE);
   for (unsigned int i = 0; i < actors->size(); i++) {
     Actor *actor = actors->get(i);
-    Buffer contentAuxBuffer(64);
+    WiFiManagerParameter* ap1 = new WiFiManagerParameter("<p><h2>Actor ");
+    wm.addParameter(ap1);
+    c++;
+    WiFiManagerParameter* ap2 = new WiFiManagerParameter(actor->getName());
+    wm.addParameter(ap2);
+    c++;
+    WiFiManagerParameter* ap3 = new WiFiManagerParameter("</h2></p>");
+    wm.addParameter(ap3);
+    c++;
+
     for (int p = 0; p < actor->getNroProps(); p++) {
       const char *propName = actor->getPropName(p);
-      actor->getPropValue(p, &contentAuxBuffer);
-      log(CLASS_ESPCONFIG, Info, " '%s'='%s'", propName, contentAuxBuffer.getBuffer());
-      WiFiManagerParameter* pam = new WiFiManagerParameter(actor->getPropNameAlpha(p), actor->getPropNameAlpha(p), contentAuxBuffer.getBuffer(), MAX_PARAM_SIZE);
-      wm.addParameter(pam);
-      c++;
+      if (propApplicable(propName)) {
+        actor->getPropValue(p, &contentAuxBuffer);
+        log(CLASS_ESPCONFIG, Warn, " '%s'='%s'", propName, contentAuxBuffer.getBuffer());
+        idBuffer.fill("%03x", c);
+        WiFiManagerParameter* pam = new WiFiManagerParameter(
+          queue.getAt(queue.push(idBuffer.getBuffer()) - 1, "def"),
+          actor->getPropNameAlpha(p), 
+          contentAuxBuffer.getBuffer(), 
+          MAX_PARAM_SIZE
+        );
+        wm.addParameter(pam);
+        c++;
+      }
     }
   }
 
+  wm.setDarkMode(true);
+
   // callbacks
   wm.setSaveParamsCallback([&]{saveParamCallback(md);});
-
-  // invert theme, dark
-  wm.setDarkMode(true);
 
   std::vector<const char *> menu = {"wifi","info","param","sep","restart","exit"};
   wm.setMenu(menu); // custom menu, pass vector
@@ -83,7 +116,7 @@ std::function<void (const char* hostname, Module* md)> firstSetupArchitecture = 
   wm.setCountry("US");
 
   // set Hostname
-  wm.setHostname(hostname);
+  wm.setHostname(md->getApiDeviceLogin());
 
   //sets timeout until configuration portal gets turned off
   //useful to make it all retry or go to sleep in seconds
@@ -93,13 +126,15 @@ std::function<void (const char* hostname, Module* md)> firstSetupArchitecture = 
   wm.setSaveConnect(false); // do not connect, only save
 
   // This is sometimes necessary, it is still unknown when and why this is needed but it may solve some race condition or bug in esp SDK/lib
-  // wm.setCleanConnect(true); // disconnect before connect, clean connect
+  wm.setCleanConnect(true); // disconnect before connect, clean connect
 
-  if(!wm.autoConnect(hostname, WIFI_STA_PASS)) {
+  wm.setBreakAfterConfig(true); // needed to use saveWifiCallback
+
+  if(!wm.autoConnect(md->getApiDeviceLogin(), WIFI_STA_PASS)) {
     log(CLASS_ESPCONFIG, Warn, "Failed to connect and hit timeout");
   } else {
     //if you get here you have connected to the WiFi
-      log(CLASS_ESPCONFIG, Debug, "Connected!");
+    log(CLASS_ESPCONFIG, Debug, "Connected!");
   }
 
   WiFiManagerParameter** params = wm.getParameters();
