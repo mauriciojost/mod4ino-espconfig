@@ -13,17 +13,14 @@
 WiFiManager wm(Serial);
 
 #define DELAY_MS_WIFI_STA 2000
-#define MAX_PARAM_SIZE 16
+#define MAX_PARAM_SIZE 32
 #define CONFIG_PORTAL_TIMEOUT_SECS 240
 #define WIFI_STA_PASS "main4ino"
 #define MAX_AMOUNT_OF_PROPS 64
 #define PROP_ID_LENGTH 3
 
 bool propApplicable(const char* name) {
-  return name[0] != '~' && 
-    name[0] != '.' && 
-    name[0] != '_' && 
-    name[0] != '+';
+  return true;
 }
 
 void saveParamCallback(Module* m){
@@ -42,14 +39,16 @@ void saveParamCallback(Module* m){
       if (propApplicable(propName)) {
         WiFiManagerParameter* pa = params[c];
         Buffer contentAuxBuffer(MAX_PARAM_SIZE);
-        log(CLASS_ESPCONFIG, Warn, " %s<-'%s'", propName, pa->getValue());
         contentAuxBuffer.load(pa->getValue());
         actor->setPropValue(p, &contentAuxBuffer);
+        contentAuxBuffer.clear();
+        actor->getPropValue(p, &contentAuxBuffer);
+        log(CLASS_ESPCONFIG, Debug, " %s<-'%s'", propName, contentAuxBuffer.getBuffer());
         c++;
       }
     }
   }
-  // wm.stopConfigPortal();
+  wm.stopConfigPortal();
 }
 
 std::function<void (Module* md)> firstSetupArchitecture = [&](Module* md) {
@@ -88,7 +87,7 @@ std::function<void (Module* md)> firstSetupArchitecture = [&](Module* md) {
       const char *propName = actor->getPropName(p);
       if (propApplicable(propName)) {
         actor->getPropValue(p, &contentAuxBuffer);
-        log(CLASS_ESPCONFIG, Warn, " '%s'='%s'", propName, contentAuxBuffer.getBuffer());
+        log(CLASS_ESPCONFIG, Debug, " '%s'='%s'", propName, contentAuxBuffer.getBuffer());
         idBuffer.fill("%03x", c);
         WiFiManagerParameter* pam = new WiFiManagerParameter(
           queue.getAt(queue.push(idBuffer.getBuffer()) - 1, "def"),
@@ -107,7 +106,7 @@ std::function<void (Module* md)> firstSetupArchitecture = [&](Module* md) {
   // callbacks
   wm.setSaveParamsCallback([&]{saveParamCallback(md);});
 
-  std::vector<const char *> menu = {"wifi","info","param","sep","restart","exit"};
+  std::vector<const char *> menu = {"param","sep","restart","exit"};
   wm.setMenu(menu); // custom menu, pass vector
 
   // set country
@@ -129,9 +128,11 @@ std::function<void (Module* md)> firstSetupArchitecture = [&](Module* md) {
   wm.setCleanConnect(true); // disconnect before connect, clean connect
 
   wm.setBreakAfterConfig(true); // needed to use saveWifiCallback
+ 
+  wm.setCaptivePortalEnable(true);
 
   if(!wm.autoConnect(md->getApiDeviceLogin(), WIFI_STA_PASS)) {
-    log(CLASS_ESPCONFIG, Warn, "Failed to connect and hit timeout");
+    log(CLASS_ESPCONFIG, Info, "Auto connect finished");
   } else {
     //if you get here you have connected to the WiFi
     log(CLASS_ESPCONFIG, Debug, "Connected!");
