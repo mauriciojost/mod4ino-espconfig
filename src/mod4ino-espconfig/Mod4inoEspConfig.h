@@ -20,14 +20,14 @@ WiFiManager wm(Serial);
 #define PROP_ID_LENGTH 3
 
 #ifndef ESP_CONFIG_APPLICABLE_PROP_EXPR
-#define ESP_CONFIG_APPLICABLE_PROP_EXPR (!status && !debug)
+#define ESP_CONFIG_APPLICABLE_PROP_EXPR (status || debug || advanced || sensitive)
 #endif // ESP_CONFIG_APPLICABLE_PROP_EXPR
 
-bool propApplicable(const char* name) {
-  bool sensitive = (name[0] == SENSITIVE_PROP_PREFIX[0]);
-  bool debug = (name[0] == DEBUG_PROP_PREFIX[0]);
-  bool advanced = (name[0] == ADVANCED_PROP_PREFIX[0]);
-  bool status = (name[0] == STATUS_PROP_PREFIX[0]);
+bool propApplicable(const char* aname, const char* pname) {
+  bool sensitive = (pname[0] == SENSITIVE_PROP_PREFIX[0]);
+  bool debug = (pname[0] == DEBUG_PROP_PREFIX[0]);
+  bool advanced = (pname[0] == ADVANCED_PROP_PREFIX[0]);
+  bool status = (pname[0] == STATUS_PROP_PREFIX[0]);
   return (ESP_CONFIG_APPLICABLE_PROP_EXPR);
 }
 
@@ -44,7 +44,7 @@ void saveParamCallback(Module* m){
     log(CLASS_ESPCONFIG, Fine, "%s:", actor->getName());
     for (int p = 0; p < actor->getNroProps(); p++) {
       const char *propName = actor->getPropName(p);
-      if (propApplicable(propName)) {
+      if (propApplicable(actor->getName(), propName)) {
         WiFiManagerParameter* pa = params[c];
         Buffer contentAuxBuffer(MAX_PARAM_SIZE);
         contentAuxBuffer.load(pa->getValue());
@@ -93,7 +93,7 @@ std::function<void (Module* md)> firstSetupArchitecture = [&](Module* md) {
 
     for (int p = 0; p < actor->getNroProps(); p++) {
       const char *propName = actor->getPropName(p);
-      if (propApplicable(propName)) {
+      if (propApplicable(actor->getName(), propName)) {
         actor->getPropValue(p, &contentAuxBuffer);
         log(CLASS_ESPCONFIG, Debug, " '%s'='%s'", propName, contentAuxBuffer.getBuffer());
         idBuffer.fill("%03x", c);
