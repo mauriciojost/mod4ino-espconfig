@@ -1,6 +1,6 @@
 {
   "name": "mod4ino-espconfig",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "keywords": "module, device, bot, main4ino, arduino, esp, config",
   "description": "Mod4ino configuration for ESP devices",
   "repository": {
