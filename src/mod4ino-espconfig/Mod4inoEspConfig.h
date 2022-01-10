@@ -19,9 +19,17 @@ WiFiManager wm(Serial);
 #define MAX_AMOUNT_OF_PROPS 64
 #define PROP_ID_LENGTH 3
 
+#ifndef ESP_CONFIG_APPLICABLE_ACTOR_EXPR
+#define ESP_CONFIG_APPLICABLE_ACTOR_EXPR (aname == "mod4ino")
+#endif // ESP_CONFIG_APPLICABLE_ACTOR_EXPR
+
 #ifndef ESP_CONFIG_APPLICABLE_PROP_EXPR
-#define ESP_CONFIG_APPLICABLE_PROP_EXPR (status || debug || advanced || sensitive)
+#define ESP_CONFIG_APPLICABLE_PROP_EXPR true
 #endif // ESP_CONFIG_APPLICABLE_PROP_EXPR
+
+bool actorApplicable(const char* aname) {
+  return (ESP_CONFIG_APPLICABLE_ACTOR_EXPR);
+}
 
 bool propApplicable(const char* aname, const char* pname) {
   bool sensitive = (pname[0] == SENSITIVE_PROP_PREFIX[0]);
@@ -38,21 +46,23 @@ void saveParamCallback(Module* m){
   int c = 0;
   for (unsigned int i = 0; i < actors->size(); i++) {
     Actor *actor = actors->get(i);
-    c++; // ignore actor name label prefix
-    c++; // ignore actor name label actor name
-    c++; // ignore actor name label suffix
-    log(CLASS_ESPCONFIG, Fine, "%s:", actor->getName());
-    for (int p = 0; p < actor->getNroProps(); p++) {
-      const char *propName = actor->getPropName(p);
-      if (propApplicable(actor->getName(), propName)) {
-        WiFiManagerParameter* pa = params[c];
-        Buffer contentAuxBuffer(MAX_PARAM_SIZE);
-        contentAuxBuffer.load(pa->getValue());
-        actor->setPropValue(p, &contentAuxBuffer);
-        contentAuxBuffer.clear();
-        actor->getPropValue(p, &contentAuxBuffer);
-        log(CLASS_ESPCONFIG, Debug, " %s<-'%s'", propName, contentAuxBuffer.getBuffer());
-        c++;
+    if (actorApplicable(actor->getName())) {
+      c++; // ignore actor name label prefix
+      c++; // ignore actor name label actor name
+      c++; // ignore actor name label suffix
+      log(CLASS_ESPCONFIG, Fine, "%s:", actor->getName());
+      for (int p = 0; p < actor->getNroProps(); p++) {
+        const char *propName = actor->getPropName(p);
+        if (propApplicable(actor->getName(), propName)) {
+          WiFiManagerParameter* pa = params[c];
+          Buffer contentAuxBuffer(MAX_PARAM_SIZE);
+          contentAuxBuffer.load(pa->getValue());
+          actor->setPropValue(p, &contentAuxBuffer);
+          contentAuxBuffer.clear();
+          actor->getPropValue(p, &contentAuxBuffer);
+          log(CLASS_ESPCONFIG, Debug, " %s<-'%s'", propName, contentAuxBuffer.getBuffer());
+          c++;
+        }
       }
     }
   }
@@ -81,30 +91,34 @@ std::function<void (Module* md)> firstSetupArchitecture = [&](Module* md) {
   Buffer contentAuxBuffer(MAX_PARAM_SIZE);
   for (unsigned int i = 0; i < actors->size(); i++) {
     Actor *actor = actors->get(i);
-    WiFiManagerParameter* ap1 = new WiFiManagerParameter("<p><h2>Actor ");
-    wm.addParameter(ap1);
-    c++;
-    WiFiManagerParameter* ap2 = new WiFiManagerParameter(actor->getName());
-    wm.addParameter(ap2);
-    c++;
-    WiFiManagerParameter* ap3 = new WiFiManagerParameter("</h2></p>");
-    wm.addParameter(ap3);
-    c++;
+    log(CLASS_ESPCONFIG, Debug, "%s", actor->getName());
 
-    for (int p = 0; p < actor->getNroProps(); p++) {
-      const char *propName = actor->getPropName(p);
-      if (propApplicable(actor->getName(), propName)) {
-        actor->getPropValue(p, &contentAuxBuffer);
-        log(CLASS_ESPCONFIG, Debug, " '%s'='%s'", propName, contentAuxBuffer.getBuffer());
-        idBuffer.fill("%03x", c);
-        WiFiManagerParameter* pam = new WiFiManagerParameter(
-          queue.getAt(queue.push(idBuffer.getBuffer()) - 1, "def"),
-          actor->getPropNameAlpha(p), 
-          contentAuxBuffer.getBuffer(), 
-          MAX_PARAM_SIZE
-        );
-        wm.addParameter(pam);
-        c++;
+    if (actorApplicable(actor->getName())) {
+      WiFiManagerParameter* ap1 = new WiFiManagerParameter("<p><h2>Actor ");
+      wm.addParameter(ap1);
+      c++;
+      WiFiManagerParameter* ap2 = new WiFiManagerParameter(actor->getName());
+      wm.addParameter(ap2);
+      c++;
+      WiFiManagerParameter* ap3 = new WiFiManagerParameter("</h2></p>");
+      wm.addParameter(ap3);
+      c++;
+
+      for (int p = 0; p < actor->getNroProps(); p++) {
+        const char *propName = actor->getPropName(p);
+        if (propApplicable(actor->getName(), propName)) {
+          actor->getPropValue(p, &contentAuxBuffer);
+          log(CLASS_ESPCONFIG, Debug, " '%s'='%s'", propName, contentAuxBuffer.getBuffer());
+          idBuffer.fill("%03x", c);
+          WiFiManagerParameter* pam = new WiFiManagerParameter(
+            queue.getAt(queue.push(idBuffer.getBuffer()) - 1, "def"),
+            actor->getPropNameAlpha(p), 
+            contentAuxBuffer.getBuffer(), 
+            MAX_PARAM_SIZE
+          );
+          wm.addParameter(pam);
+          c++;
+        }
       }
     }
   }
