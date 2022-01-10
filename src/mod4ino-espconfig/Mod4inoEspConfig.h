@@ -19,8 +19,16 @@ WiFiManager wm(Serial);
 #define MAX_AMOUNT_OF_PROPS 64
 #define PROP_ID_LENGTH 3
 
+#ifndef ESP_CONFIG_APPLICABLE_PROP_EXPR
+#define ESP_CONFIG_APPLICABLE_PROP_EXPR (!status && !debug)
+#endif // ESP_CONFIG_APPLICABLE_PROP_EXPR
+
 bool propApplicable(const char* name) {
-  return true;
+  bool sensitive = (name[0] == SENSITIVE_PROP_PREFIX[0]);
+  bool debug = (name[0] == DEBUG_PROP_PREFIX[0]);
+  bool advanced = (name[0] == ADVANCED_PROP_PREFIX[0]);
+  bool status = (name[0] == STATUS_PROP_PREFIX[0]);
+  return (ESP_CONFIG_APPLICABLE_PROP_EXPR);
 }
 
 void saveParamCallback(Module* m){
